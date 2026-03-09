@@ -17,4 +17,10 @@ app.use(express.static("public"))   //to store images etc.
 
 app.use(cookieParser())
 
+
+//routes
+
+import userRouter from "./routes/user.routes.js"
+
+app.use("/api/v1/user",userRouter)   // prefix
 export {app }
