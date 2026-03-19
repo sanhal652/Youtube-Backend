@@ -1,3 +1,4 @@
+import { v2 as cloudinary } from "cloudinary";
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
@@ -155,7 +156,7 @@ const userLogout = asyncHandler(async (req, res) => {
     //we get the access token from the middleware
     await User.findByIdAndUpdate(req.user._id,
         {
-            $set: { refreshToken: undefined }  //we delete the refresh token from database
+            $set: { refreshToken: null }  //we delete the refresh token from database
         },
         {
             new: true
@@ -258,7 +259,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 const updateAccountDetails = asyncHandler(async (req, res) => {
     const { fullName, email } = req.body
     if (!fullName || !email)
-        throw new ApiError(400, "Username or email is required")
+        throw new ApiError(400, "Fullname or email is required")
     const user = await User.findByIdAndUpdate(req.user?._id, {
         $set: {
             fullName,
@@ -345,7 +346,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         //here we are finding the subscribers of a channel
         {
             $lookup: {
-                from: "Subscription",
+                from: "subscriptions",
                 localField: "_id",   //This is the field from the current collection (the one you are already in)
                 foreignField: "channel", //This is the field in the other collection (the one you are "looking into").
                 as: "subscribers"

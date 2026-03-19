@@ -2,7 +2,7 @@ import {Router} from "express"
 import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, refreshAccessToken, updateAccountDetails, updateAvatar, updateCoverImg, userLogin,userLogout, userRegister} from "../controllers/user.controller.js"
 import { upload } from "../middlewares/multer.middleware.js"
 import { verifyJwt } from "../middlewares/auth.middleware.js"
-import multer from "multer"
+
 
 const router=Router()
 
