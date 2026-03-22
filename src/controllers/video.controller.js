@@ -144,16 +144,132 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 //get video by id
 
-// const getVideoById=asyncHandler(async(req,res)=>{
-//     const {videoId} =req.params
-//     const video= await Videos.findById(videoId)
-//     if(!video)
-//         throw new ApiError(404,"Video not found")
-//     return res.status(200)
-//     .json(
-//         new ApiResponse(200,video,"Video fetched successfully")
-//     )
-// })
+const getVideoById=asyncHandler(async(req,res)=>{
+    const {videoId} =req.params
+    if(!videoId?.trim())
+        throw new ApiError(400,"Video not found")
+
+    //to increment the view count
+    await Videos.findByIdAndUpdate(videoId, {
+        $inc: { views: 1 }
+    });
+    const video= await Videos.aggregate([
+        {
+            $match:{
+               _id: new mongoose.Types.ObjectId(videoId)
+            }
+        },
+        {
+            //getting like count
+            $lookup:{
+                from:"likes",
+                localField:"_id",
+                foreignField:"video",
+                as:"likesCount",
+            }
+        },
+        {
+            //getting comments count
+            $lookup:{
+                from:"comments",
+                localField:"_id",
+                foreignField:"video",
+                as:"commentsCount",  
+            }
+        },
+        {
+            //getting recent comments
+            $lookup:{
+                from:"comments",
+                localField:"_id",
+                foreignField:"video",
+                as:"recentComments",
+                pipeline:[{
+                      $sort:{ createdAt:-1}
+                    },
+                    {
+                        $limit:10
+                    },
+                    {
+                        $lookup:{
+                            from:"users",
+                            localField:"owner",
+                            foreignField:"_id",
+                            as:"commentedBy",
+                            pipeline:[{
+                                $project:{
+                                    username:1,
+                                    avatar:1
+                                }
+                            }]
+                        }
+                    },
+                    {
+                        $addFields:{
+                           commentedBy:{
+                            $first:"$commentedBy"
+                           }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            //getting owner
+            $lookup:{
+                from:"users",
+                localField:"owner",
+                foreignField:"_id",
+                as:"owner",
+                pipeline:[{
+                    $project:{
+                        username:1,
+                        avatar:1
+                    }
+                }]
+            }
+        },
+        {
+            $addFields:{
+                totalLikes:{
+                    $size:"$likesCount"
+                },
+                totalComments:{
+                    $size:"$commentsCount"
+                },
+                owner:{
+                    $first:"$owner"
+                }
+            }
+        },
+        {
+            $project:{
+                totalLikes:1,
+                totalComments:1,
+                views:1,
+                title:1,
+                thumbnail:1,
+                owner:1,
+                recentComments:1,
+                videoFile:1,
+                description:1
+            }
+        }
+    ])  
+    if(!video?.length)
+        throw new ApiError(500,"Unable to fetch video")
+    return res.status(200)
+    .json(
+        new ApiResponse(200,video[0],"Video fetched successfully")
+    )
+})
 
 
-export { uploadVideo, deleteVideo, updateVideo, getVideoById }
+//get all videos for home page or feed
+
+const getAllVideos = asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
+    //TODO: get all videos based on query, sort, pagination
+})
+
+export { uploadVideo, deleteVideo, updateVideo, getVideoById, getAllVideos }

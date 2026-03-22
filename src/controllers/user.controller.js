@@ -392,58 +392,58 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
             }
         }
     ])
-    if(!channel?.length){
-        throw new ApiError(404,"Channel does not exist")
+    if (!channel?.length) {
+        throw new ApiError(404, "Channel does not exist")
     }
-    console.log("Channel",channel)
+    console.log("Channel", channel)
     return res.status(200)
-    .json(new ApiResponse(200,channel[0],"User channel fetched successfully"))
+        .json(new ApiResponse(200, channel[0], "User channel fetched successfully"))
 })
 
 //nested lookup
 
-const getWatchHistory= asyncHandler(async(req,res)=>{
-    const user= await User.aggregate([
+const getWatchHistory = asyncHandler(async (req, res) => {
+    const user = await User.aggregate([
         {
             //match mainly determines how the application will identify
-            $match:{
-                _id:new mongoose.Types.ObjectId(req.user._id)
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user._id)
             }
         },
         // here we will  get many documents in watch history field
         {
-            $lookup:{
-                from:"videos",
-                localField:"watchHistory",
-                foreignField:"_id",
-                as:"watchHistory",
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchHistory",
                 //in watch history we are getting all the video documents
                 //but in video model there is a field caller owner which references user
                 //so we are making a sub-pipeline to connect with the user
-                pipeline:[
+                pipeline: [
                     {
-                        $lookup:{
-                            from:"users",
-                            localField:"owner",
-                            foreignField:"_id",
-                            as:"owner",
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
                             //here in owner field we will get all the details of user which is not reqd
                             //so we add another pipeline to send only the required data
-                            pipeline:[
+                            pipeline: [
                                 {
-                                    $project:{
-                                        fullName:1,
-                                        username:1,
-                                        avatar:1
+                                    $project: {
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1
                                     }
                                 }
                             ]
                         }
                     },
                     {
-                        $addFields:{
-                            owner:{
-                                $first:"$owner"   //turns array into object
+                        $addFields: {
+                            owner: {
+                                $first: "$owner"   //turns array into object
                             }
                         }
                     }
@@ -451,12 +451,12 @@ const getWatchHistory= asyncHandler(async(req,res)=>{
             }
         }
     ])
-    if(!user)
-        throw new ApiError(500,"Unable to fetch user")
+    if (!user)
+        throw new ApiError(500, "Unable to fetch user")
     return res.status(200)
-    .json(
-        new ApiResponse(200,user[0].watchHistory,"Watch history fetched successfully")
-    )
+        .json(
+            new ApiResponse(200, user[0].watchHistory, "Watch history fetched successfully")
+        )
 })
 
 export {
