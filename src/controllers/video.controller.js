@@ -92,11 +92,8 @@ const deleteVideo = asyncHandler(async (req, res) => {
 const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     const { title, description } = req.body
-    
-    // Safely access thumbnail if it exists
     const thumbnailPath = req.files?.thumbnail?.[0]?.path
 
-    // 1. Better Validation: Check if at least ONE thing is being updated
     if (!title && !description && !thumbnailPath) {
         throw new ApiError(400, "Provide at least one field to update")
     }
@@ -105,7 +102,6 @@ const updateVideo = asyncHandler(async (req, res) => {
     if (!video) 
         throw new ApiError(404, "Video does not exist")
 
-    // 2. Ownership Check (Good job on the .toString() fix!)
     if (video.owner.toString() !== req.user?._id.toString()) {
         throw new ApiError(403, "Unauthorized access")
     }
@@ -114,17 +110,14 @@ const updateVideo = asyncHandler(async (req, res) => {
     if (thumbnailPath) {
         newThumbnail = await uploadCloudinary(thumbnailPath)
         
-        // Safety: Ensure upload actually worked before deleting old one
         if (!newThumbnail?.url) {
             throw new ApiError(500, "Error while uploading to Cloudinary")
         }
 
-        // 3. Clean up the old thumbnail
         const oldThumbnailPublicId = video.thumbnail.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(oldThumbnailPublicId);
     }
 
-    // 4. Update with $set (Using || video.title ensures data isn't overwritten with null)
     const updatedVideo = await Videos.findByIdAndUpdate(
         videoId, 
         {
@@ -267,9 +260,110 @@ const getVideoById=asyncHandler(async(req,res)=>{
 
 //get all videos for home page or feed
 
-const getAllVideos = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
-    //TODO: get all videos based on query, sort, pagination
-})
+const getAllVideos = asyncHandler(async (req, res) => {  
+    //if the user does not send anything then the default values will be taken and in page 1 
+    // 10 videos will be shown
+    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
+
+    //  Initialize the Pipeline array
+    const pipeline = [];
+
+    //Filter by query (Title or Description)
+    if (query) {
+        pipeline.push({
+            $match: {
+                $or: [
+                    //regex: for partial matching
+                    //options:i - for making case insensitive
+                    { title: { $regex: query, $options: "i" } },  
+                    { description: { $regex: query, $options: "i" } }
+                ]
+            }
+        });
+    }
+
+    // If looking for a specific creator's videos
+    if (userId) {
+        pipeline.push({
+            $match: {
+                owner: new mongoose.Types.ObjectId(userId)
+            }
+        });
+    }
+
+    // Only show published videos to the public
+    pipeline.push({
+        $match: {
+            isPublished: true
+        }
+    });
+
+    // Handle how the videos are ordered
+    if (sortBy && sortType) {
+        const sortDirection = sortType === "asc" ? 1 : -1;
+        pipeline.push({
+            $sort: {
+                [sortBy]: sortDirection
+            }
+        });
+    } else {
+        // Default: Show newest videos first
+        pipeline.push({
+            $sort: {
+                createdAt: -1
+            }
+        });
+    }
+
+    // Fetch uploader details (Join with User collection)
+    pipeline.push(
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline: [
+                    {
+                        $project: {
+                            username: 1,
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                owner: {
+                    $first: "$owner"
+                }
+            }
+        }
+    );
+
+    //  PAGINATION: Prepare options for the plugin
+    const options = {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        customLabels: {
+            totalDocs: "totalVideos",
+            docs: "videos"
+        }
+    };
+
+    const result = await Videos.aggregatePaginate(
+        Videos.aggregate(pipeline),
+        options
+    );
+
+    if (!result) {
+        throw new ApiError(500, "Error while fetching videos");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, result, "Videos fetched successfully")
+    );
+});
 
 export { uploadVideo, deleteVideo, updateVideo, getVideoById, getAllVideos }
