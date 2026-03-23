@@ -4,6 +4,7 @@ import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { uploadCloudinary } from "../utils/cloudinary.js"
 import { Videos } from "../models/videos.model.js";
+import mongoose from "mongoose";
 
 //upload video
 
@@ -366,4 +367,23 @@ const getAllVideos = asyncHandler(async (req, res) => {
     );
 });
 
-export { uploadVideo, deleteVideo, updateVideo, getVideoById, getAllVideos }
+//toggle public status
+
+const togglePublicStatus= asyncHandler(async (req,res) => {
+    const {videoId}=req.params
+    const video = await Videos.findById(videoId)
+    if(!video)
+        throw new ApiError(404,"Video not found")
+    if(video.owner.toString()!==req.user?._id.toString())
+        throw new ApiError(403,"Unauthorized request")
+    video.isPublished= !video.isPublished
+    await video.save({validateBeforeSave:false})
+
+    return res.status(200)
+    .json(
+        new ApiResponse(200,video,"Publish status updated successsfully")
+    )
+    
+})
+
+export { uploadVideo, deleteVideo, updateVideo, getVideoById, getAllVideos,togglePublicStatus }
