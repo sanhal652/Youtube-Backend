@@ -6,6 +6,7 @@ import { Comment } from "../models/comments.model.js"
 import { Videos } from "../models/videos.model.js"
 import mongoose from "mongoose";
 
+
 //create new comment
 const addComment= asyncHandler(async (req,res) => {
     const {videoId} = req.params 

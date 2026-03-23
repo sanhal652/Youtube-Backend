@@ -11,7 +11,7 @@ const commentSchema= new Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:"User"
     },
-    videos:{
+    video:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Videos"
     }
