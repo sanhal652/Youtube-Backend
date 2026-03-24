@@ -12,9 +12,11 @@ const uploadVideo = asyncHandler(async (req, res) => {
 
     //get the title and description from user
     const { title, description } = req.body
+    //console.log(req.body)
+
     if (!title || !description)
         throw new ApiError(400, "Title or description is missing")
-
+    
     //get the thumbnail and videofile and check it and upload
     const thumbnailLocalPath = req.files?.thumbnail[0]?.path
     if (!thumbnailLocalPath)
