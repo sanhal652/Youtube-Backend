@@ -100,7 +100,7 @@ const getChannelVideos= asyncHandler(async (req,res) => {
         owner:channelId
     })
     .select("title description owner thumbnail")
-    .sort("-createdAt ")
+    .sort("-createdAt")
     
     if(!videos)
         throw new ApiError(500,"Error in fetching the videos")
