@@ -5,6 +5,7 @@ import { uploadCloudinary } from "../utils/cloudinary.js"
 import { Comment } from "../models/comments.model.js"
 import { Videos } from "../models/videos.model.js"
 import mongoose from "mongoose";
+import { client } from "../db/redis.js"
 
 
 //create new comment
@@ -81,6 +82,13 @@ const deleteComment= asyncHandler(async (req,res) => {
 const getVideoComments= asyncHandler(async (req,res) => {
     const {videoId} = req.params
     const {page=1, limit=10} =req.query
+
+    const commentCacheKey= `video_comments:${videoId}:page:${page}:limit:${limit}`
+    const commentCachevalue= await client.get(commentCacheKey)
+    if(commentCachevalue)
+        return res.status(200)
+        .json(new ApiResponse(200, JSON.parse(commentCachevalue),"Comments fetched successfully from redis cache"))
+
     const video= Comment.aggregate([
         {
             $match:{
@@ -122,6 +130,7 @@ const getVideoComments= asyncHandler(async (req,res) => {
     if(!comments)
         throw new ApiError(500,"Error in fetching comments")
 
+    await client.setEx(commentCacheKey,1000,JSON.stringify(comments))
     return res.status(200)
     .json(
         new ApiResponse(200,comments,"Comments fetched successfully")

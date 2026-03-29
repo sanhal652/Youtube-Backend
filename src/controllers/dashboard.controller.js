@@ -5,13 +5,26 @@ import mongoose from "mongoose"
 import { Likes } from "../models/likes.model.js"
 import { User } from "../models/user.model.js"
 import { Videos } from "../models/videos.model.js"
+import { client } from "../db/redis.js"
 
-//get channel stats
+
+//get channel stats and integrating with redis cache
 
 const channelStats= asyncHandler(async (req,res) => {
     const {channelId}= req.params
     if(!mongoose.isValidObjectId(channelId))
         throw new ApiError(400,"Invalid channel ID")
+
+    //generate a unique cache key 
+    const channelStatsCacheKey = `channel_stats:${channelId}`;
+    const channelCacheValue= await client.get(channelStatsCacheKey)
+    if(channelCacheValue)
+    {
+        return res.status(200)
+        .json(
+            new ApiResponse(200,JSON.parse(channelCacheValue),"Channel stats fetched successfully")
+        )
+    }
     const channelData= await User.aggregate([
         {
             $match:{
@@ -81,8 +94,10 @@ const channelStats= asyncHandler(async (req,res) => {
         }
     ])
 
-    if(!channelData)
+    if(!channelData.length)
         throw new ApiError(500,"Error in fetching the channel stats")
+    await client.set(channelStatsCacheKey,JSON.stringify(channelData[0]))
+    await client.expire(channelStatsCacheKey,3600)
     return res.status(200)
     .json(
         new ApiResponse(200,channelData[0],"Channel stats fetched successfully")

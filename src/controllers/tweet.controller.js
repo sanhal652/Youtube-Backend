@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js"
 import mongoose from "mongoose";
 import { Tweet } from "../models/tweets.model.js"
 import { User } from "../models/user.model.js";
+import { client } from "../db/redis.js"
 
 // add new tweet
 const addTweet= asyncHandler(async(req,res)=>{
@@ -67,6 +68,14 @@ const getUserTweets= asyncHandler(async (req,res) => {
     if (!mongoose.isValidObjectId(userId)) {
     throw new ApiError(400, "Invalid User ID format")
 }
+
+    const tweetCacheKey= `user_tweets:${userId}`
+    const tweetCacheValue= await client.get(tweetCacheKey)
+    if(tweetCacheValue)
+        return res.status(200)
+    .json(
+        new ApiResponse(200,JSON.parse(tweetCacheValue),"Tweets fetched successfully from redis cache")
+    )
     const userTweets= await Tweet.aggregate([
         {
             $match:{
@@ -96,8 +105,16 @@ const getUserTweets= asyncHandler(async (req,res) => {
             }
         }
     ])
+
+    //if server has any error in fetching tweets
     if(!userTweets)
         throw new ApiError(500,"Error in fetching tweets")
+
+    //if the user has not posted any tweets
+    if(!userTweets.length)
+        throw new ApiError(404,"No tweets found for this user")
+    
+    await client.setEx(tweetCacheKey,1800,JSON.stringify(userTweets))
     return res.status(200)
     .json(
         new ApiResponse(200,userTweets,"Tweets fetched successfully")

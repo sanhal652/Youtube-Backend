@@ -5,6 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js"
 import { uploadCloudinary } from "../utils/cloudinary.js"
 import { Videos } from "../models/videos.model.js";
 import mongoose from "mongoose";
+import {client} from "../db/redis.js"
 
 //upload video
 
@@ -144,11 +145,22 @@ const getVideoById=asyncHandler(async(req,res)=>{
     const {videoId} =req.params
     if(!videoId?.trim())
         throw new ApiError(400,"Video not found")
+    
+   
+
 
     //to increment the view count
     await Videos.findByIdAndUpdate(videoId, {
         $inc: { views: 1 }
     });
+
+     const videoCacheKey=`video:${videoId}`
+    const videoCacheValue= await client.get(videoCacheKey)
+    if(videoCacheValue)
+        return res.status(200)
+    .json(new ApiResponse(200, JSON.parse(videoCacheValue),"Video fetched successfully from redis cache"))
+
+
     const video= await Videos.aggregate([
         {
             $match:{
@@ -254,6 +266,13 @@ const getVideoById=asyncHandler(async(req,res)=>{
     ])  
     if(!video?.length)
         throw new ApiError(500,"Unable to fetch video")
+   
+    
+    //setEx= set with expiry, 
+    // instead of using client.set and then lient.expiry 
+    // we use this for a single command to set the value with expiry time in seconds
+    await client.setEx(videoCacheKey,1000,JSON.stringify(video[0]))   
+    
     return res.status(200)
     .json(
         new ApiResponse(200,video[0],"Video fetched successfully")
@@ -267,6 +286,12 @@ const getAllVideos = asyncHandler(async (req, res) => {
     //if the user does not send anything then the default values will be taken and in page 1 
     // 10 videos will be shown
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
+
+    const allVideosCacheKey=`all_videos:${page}:${limit}:${query || ""}:${sortBy || ""}:${sortType || ""}:${userId || ""}`
+    const allVideosCacheValue= await client.get(allVideosCacheKey)
+    if(allVideosCacheValue)
+        return res.status(200)
+    .json(new ApiResponse(200, JSON.parse(allVideosCacheValue),"Videos fetched successfully from redis cache"))
 
     //  Initialize the Pipeline array
     const pipeline = [];
@@ -363,6 +388,8 @@ const getAllVideos = asyncHandler(async (req, res) => {
     if (!result) {
         throw new ApiError(500, "Error while fetching videos");
     }
+    
+    await client.setEx(allVideosCacheKey,2000,JSON.stringify(result))
 
     return res.status(200).json(
         new ApiResponse(200, result, "Videos fetched successfully")
