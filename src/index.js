@@ -1,13 +1,16 @@
-
+import http from "http"
 import dotenv from "dotenv"   //we have done in this way to maintain consistency
 import connectDB from "./db/index.js";
 import { app } from "./app.js";
 import { connectRedis } from "./db/redis.js";
+import {initializeSocket} from "./socket.js"
 
 dotenv.config({
     path: './.env'
 })
 
+const server = http.createServer(app)   //for creating a node js server
+const {io,userSocketMap} = initializeSocket(server)
 
 connectDB()
     .then(()=>

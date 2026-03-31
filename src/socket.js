@@ -8,11 +8,11 @@ export const initializeSocket = (server) => {
             credentials: true
         }
     })
-
+    const userSocketMap = {}; // To store the mapping of userId to socket.id
     app.set("io", io)  //to make io available in the routes
     app.set("userSocketMap", userSocketMap);
 
-    const userSocketMap = {};
+    
     // Socket.io connection handling
     io.on("connection", (socket) => {
         console.log("User Connected:", socket.id);
