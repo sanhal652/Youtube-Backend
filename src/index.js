@@ -1,4 +1,3 @@
-// require ('dotenv').config({path:'./env'})
 
 import dotenv from "dotenv"   //we have done in this way to maintain consistency
 import connectDB from "./db/index.js";
@@ -8,6 +7,7 @@ import { connectRedis } from "./db/redis.js";
 dotenv.config({
     path: './.env'
 })
+
 
 connectDB()
     .then(()=>
@@ -22,7 +22,7 @@ connectDB()
             console.log("Error in connecting to the database");
             throw error;
         })
-        app.listen(process.env.PORT || 8000, () => {
+        server.listen(process.env.PORT || 8000, () => {
             console.log(`App listening on port: ${process.env.PORT}`)
         })
     })
@@ -32,23 +32,3 @@ connectDB()
 
     
 
-//we will be using IIFE to connect to the database and start the server
-
-//1st approach
-
-// (async ()=>{
-//     try {
-//         await mongoose.connect(`${process.env.MONGODB_URI}/${DB_NAME}`)
-//         app.on("error",(error)=>{
-//             console.log("Error in connecting to the database");
-//             throw error;
-//         })
-
-//         app.listen(process.env.PORT,()=>{
-//             console.log(`App is running on port ${process.env.PORT}`);
-//         })
-//     } catch (error) {
-//         console.error("Error",error);
-//         throw error;
-//     }
-// })()
