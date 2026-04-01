@@ -6,6 +6,7 @@ import { Likes } from "../models/likes.model.js"
 import { Videos } from "../models/videos.model.js"
 import { Tweet } from "../models/tweets.model.js"
 import { Comment } from "../models/comments.model.js"
+import { client } from "../db/redis.js"
 import { app } from "../app.js"
 
 //toggle like status in video
@@ -44,9 +45,12 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         if (videoOwner && videoOwner.owner) {
             const videoOwnerId = videoOwner.owner.toString()
             const receiverSocketId = userSocketMap[videoOwnerId]
+            await client.hIncrBy("notification:unread",videoOwnerId,1)
+
+            const currentUnreadCount= await client.hGet("notification:unread",videoOwnerId)
             if (receiverSocketId) {
                 io.to(receiverSocketId).emit("notification", {
-                    message: "Somebody liked your video",
+                    message: `You have ${currentUnreadCount} likes`,
                     from: {
                         _id: req.user?._id,
                         username: req.user?.username
