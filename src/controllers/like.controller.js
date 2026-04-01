@@ -50,12 +50,13 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
             const currentUnreadCount= await client.hGet("notification:unread",videoOwnerId)
             if (receiverSocketId) {
                 io.to(receiverSocketId).emit("notification", {
-                    message: `You have ${currentUnreadCount} likes`,
+                    message: `You have unread likes`,
                     from: {
                         _id: req.user?._id,
                         username: req.user?.username
                     },
-                    videoId: videoId
+                    videoId: videoId,
+                    unreadCount:currentUnreadCount
                 })
             }
         }
