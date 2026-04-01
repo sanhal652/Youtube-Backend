@@ -3,6 +3,8 @@ import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import mongoose from "mongoose"
 import { Subscription } from "../models/subscription.model.js";
+import { User } from "../models/user.model.js";
+
 
 //toggle subscription status 
 const toggleSubscriptionStatus= asyncHandler(async (req,res) => {
@@ -37,6 +39,27 @@ const toggleSubscriptionStatus= asyncHandler(async (req,res) => {
 
         if(!newSubscription)
             throw new ApiError(500,"Error in subscribing channel")
+
+        const subscriber= await User.findById(req.user?._id)
+        const io=req.app.get("io")
+        const userSocketMap= req.app.get("userSocketMap")
+
+        if(subscriber && subscriber._id.toString())
+        {
+            const receiverSocketId= userSocketMap[channelId]
+
+            if(receiverSocketId)
+            {
+                io.to(receiverSocketId).emit("notification",{
+                    message:"Somebody subscribed to your channel",
+                    from:{
+                        _id:req.user?._id,
+                        username:req.user?.username,
+                        avatar:req.user?.avatar
+                    }
+                })
+            }
+        }
 
         return res.status(201)
         .json(
