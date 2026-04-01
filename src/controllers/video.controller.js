@@ -146,9 +146,6 @@ const getVideoById=asyncHandler(async(req,res)=>{
     if(!videoId?.trim())
         throw new ApiError(400,"Video not found")
     
-   
-
-
     //to increment the view count
     await Videos.findByIdAndUpdate(videoId, {
         $inc: { views: 1 }
