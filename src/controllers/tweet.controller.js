@@ -3,7 +3,6 @@ import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import mongoose from "mongoose";
 import { Tweet } from "../models/tweets.model.js"
-import { User } from "../models/user.model.js";
 import { client } from "../db/redis.js"
 
 // add new tweet
@@ -17,8 +16,7 @@ const addTweet= asyncHandler(async(req,res)=>{
     })
     if(!tweet)
         throw new ApiError(500,"Error in adding tweet")
-    return res.status(201)
-    .json(
+    return res.status(201).json(
        new ApiResponse( 201,tweet,"Tweet added successfully")
     )
 })
@@ -39,8 +37,7 @@ const updateTweet= asyncHandler(async (req,res) => {
     const updatedTweet=await tweet.save({validateBeforeSave:false})
     if(!updatedTweet)
         throw new ApiError(500,"Error in updating tweet, please try again later")
-    return res.status(200)
-    .json(
+    return res.status(200).json(
         new ApiResponse(200,updatedTweet,"Tweet updated successfully")
     )
 })
@@ -56,8 +53,7 @@ const deleteTweet= asyncHandler(async (req,res) => {
     const deletedTweet= await Tweet.findByIdAndDelete(tweetId)
     if(!deletedTweet)
         throw new ApiError(500,"Error in deletingtweet, please try again later")
-    return res.status(200)
-    .json(
+    return res.status(200).json(
         new ApiResponse(200,{},"Tweet deleted successfully")
     )
 })
@@ -72,8 +68,7 @@ const getUserTweets= asyncHandler(async (req,res) => {
     const tweetCacheKey= `user_tweets:${userId}`
     const tweetCacheValue= await client.get(tweetCacheKey)
     if(tweetCacheValue)
-        return res.status(200)
-    .json(
+        return res.status(200).json(
         new ApiResponse(200,JSON.parse(tweetCacheValue),"Tweets fetched successfully from redis cache")
     )
     const userTweets= await Tweet.aggregate([
@@ -112,11 +107,11 @@ const getUserTweets= asyncHandler(async (req,res) => {
 
     //if the user has not posted any tweets
     if(!userTweets.length)
-        throw new ApiError(404,"No tweets found for this user")
+        return res.status(200).json(
+        new ApiResponse(200,[],"No tweets found for this user"))
     
     await client.setEx(tweetCacheKey,1800,JSON.stringify(userTweets))
-    return res.status(200)
-    .json(
+    return res.status(200).json(
         new ApiResponse(200,userTweets,"Tweets fetched successfully")
     )
 })

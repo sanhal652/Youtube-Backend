@@ -14,7 +14,7 @@ const addComment= asyncHandler(async (req,res) => {
     const {content}=req.body
     
     if(!content)
-        throw new ApiError(404,"Content is empty")
+        throw new ApiError(400,"Content is empty")
     const video= await Videos.findById(videoId)
     if(!video)
         throw new ApiError(404,"Video does not exist")

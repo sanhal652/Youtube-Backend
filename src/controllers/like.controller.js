@@ -56,7 +56,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
                         username: req.user?.username
                     },
                     videoId: videoId,
-                    unreadCount:currentUnreadCount
+                    unreadCount:currentUnreadCount   //in frontend it can be easily to display no.of notifications beside bell icon
                 })
             }
         }
