@@ -146,17 +146,16 @@ const getVideoById=asyncHandler(async(req,res)=>{
     if(!videoId?.trim())
         throw new ApiError(400,"Video not found")
     
-    //to increment the view count
-    await Videos.findByIdAndUpdate(videoId, {
-        $inc: { views: 1 }
-    });
-
      const videoCacheKey=`video:${videoId}`
     const videoCacheValue= await client.get(videoCacheKey)
     if(videoCacheValue)
         return res.status(200)
     .json(new ApiResponse(200, JSON.parse(videoCacheValue),"Video fetched successfully from redis cache"))
 
+    //to increment the view count
+    await Videos.findByIdAndUpdate(videoId, {
+        $inc: { views: 1 }
+    });
 
     const video= await Videos.aggregate([
         {
@@ -274,6 +273,7 @@ const getVideoById=asyncHandler(async(req,res)=>{
     .json(
         new ApiResponse(200,video[0],"Video fetched successfully")
     )
+       
 })
 
 

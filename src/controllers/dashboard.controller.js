@@ -96,8 +96,7 @@ const channelStats= asyncHandler(async (req,res) => {
 
     if(!channelData.length)
         throw new ApiError(500,"Error in fetching the channel stats")
-    await client.set(channelStatsCacheKey,JSON.stringify(channelData[0]))
-    await client.expire(channelStatsCacheKey,3600)
+    await client.setEx(channelStatsCacheKey,3600,JSON.stringify(channelData[0]))
     return res.status(200)
     .json(
         new ApiResponse(200,channelData[0],"Channel stats fetched successfully")

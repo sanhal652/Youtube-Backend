@@ -22,7 +22,7 @@ const toggleSubscriptionStatus= asyncHandler(async (req,res) => {
 
     if(existingSubscription)
     {
-        const deletedSubscription= await Subscription.findOneAndDelete(existingSubscription._id)
+        const deletedSubscription= await Subscription.findByIdAndDelete(existingSubscription._id)
         if(!deletedSubscription)
             throw new ApiError(500,"Error in deleting subscription")
         return res.status(200)

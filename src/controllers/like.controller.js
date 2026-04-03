@@ -7,7 +7,6 @@ import { Videos } from "../models/videos.model.js"
 import { Tweet } from "../models/tweets.model.js"
 import { Comment } from "../models/comments.model.js"
 import { client } from "../db/redis.js"
-import { app } from "../app.js"
 
 //toggle like status in video
 const toggleVideoLike = asyncHandler(async (req, res) => {
@@ -159,7 +158,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
             if(receiverSocketId)
             {
                 io.to(receiverSocketId).emit("notification",{
-                    message:"Somebody iked your comment",
+                    message:"Somebody liked your comment",
                     from:{
                         _id:req.user?._id,
                         username:req.user?.username

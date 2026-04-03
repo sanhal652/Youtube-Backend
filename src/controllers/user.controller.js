@@ -3,7 +3,6 @@ import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { User } from "../models/user.model.js"
-import { Subscription } from "../models/subscription.model.js"
 import { uploadCloudinary } from "../utils/cloudinary.js"
 import jwt from "jsonwebtoken"
 import mongoose from "mongoose"
@@ -94,7 +93,7 @@ const userRegister = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Something went wrong while registering user")
 
     return res.status(201).json(
-        new ApiResponse(200, createdUser, "User registered successfully")
+        new ApiResponse(201, createdUser, "User registered successfully")
     )
 })
 
@@ -224,7 +223,9 @@ const refreshAccessToken = asyncHandler(async (req, res) =>    //if the access t
 const changeCurrentPassword = asyncHandler(async (req, res) => {
     //we take the old and new passwords from the user
     const { oldPassword, newPassword, confirmPassword } = req.body
-
+     
+    if(!newPassword || !oldPassword || !confirmPassword)
+        throw new ApiError(400,"Old password, new password and confirm password are required")
     //check new and confirm password
     if (newPassword !== confirmPassword)
         throw new ApiError(400, "New Password and confirm password not matching")
@@ -334,7 +335,7 @@ const updateCoverImg = asyncHandler(async (req, res) => {
 //get channel details
 const getUserChannelProfile = asyncHandler(async (req, res) => {
     const { username } = req.params
-    if (!username?.trim)
+    if (!username?.trim())
         throw new ApiError(400, "Username not found")
     const channel = await User.aggregate([
         {
@@ -395,7 +396,6 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     if (!channel?.length) {
         throw new ApiError(404, "Channel does not exist")
     }
-    console.log("Channel", channel)
     return res.status(200)
         .json(new ApiResponse(200, channel[0], "User channel fetched successfully"))
 })
@@ -451,7 +451,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
             }
         }
     ])
-    if (!user)
+    if (!user.length)
         throw new ApiError(500, "Unable to fetch user")
     return res.status(200)
         .json(
