@@ -8,7 +8,7 @@ import { Tweet } from "../models/tweets.model.js"
 import { Comment } from "../models/comments.model.js"
 import { client } from "../db/redis.js"
 
-//toggle like status in video
+//toggle like status in video and send notification to video owner using web sockets
 const toggleVideoLike = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     if (!mongoose.isValidObjectId(videoId))
@@ -44,9 +44,13 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         if (videoOwner && videoOwner.owner) {
             const videoOwnerId = videoOwner.owner.toString()
             const receiverSocketId = userSocketMap[videoOwnerId]
+
+            //increment the unread notification count for the video owner in redis cache
             await client.hIncrBy("notification:unread",videoOwnerId,1)
 
             const currentUnreadCount= await client.hGet("notification:unread",videoOwnerId)
+
+            //emit data if owner is online
             if (receiverSocketId) {
                 io.to(receiverSocketId).emit("notification", {
                     message: `You have unread likes`,
@@ -67,7 +71,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
     }
 })
 
-//toggle likes on tweet
+//toggle likes on tweet with web socket notification to tweet owner
 const toggleTweetLike = asyncHandler(async (req, res) => {
     const { tweetId } = req.params
     if (!mongoose.isValidObjectId(tweetId))
@@ -119,7 +123,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
     }
 })
 
-//toggle likes on comment
+//toggle likes on comment with web socket notification to comment owner
 const toggleCommentLike = asyncHandler(async (req, res) => {
     const { commentId } = req.params
     if (!mongoose.isValidObjectId(commentId))
