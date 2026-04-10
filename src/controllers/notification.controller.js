@@ -8,5 +8,18 @@ import { client } from "../db/redis.js"
 
 const clearUnreadNotification= asyncHandler(async (req,res) => {
     const owner=req.user?._id.toString()
-    await client.hDel("notification:unread")
+    const deletedNotificationCount= await client.hDel("notification:unread",owner)
+
+    if(deletedNotificationCount===0)
+    {
+        return res.status(200)
+        .json(new ApiResponse(200,{},"No unread notification "))
+    }
+    else if(deletedNotificationCount>0)
+    {
+        return res.status(200)
+        .json(new ApiResponse(200,{},"Notifications cleared successfully"))
+    }
 })
+
+export {clearUnreadNotification}

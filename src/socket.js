@@ -24,16 +24,16 @@ export const initializeSocket = (server) => {
         })
         socket.on("joinVideo", (videoId) => {
             socket.join(videoId);
-            console.log(`User joined room: ${videoId}`);
+            console.log(`User ${socket.userId} joined room: ${videoId}`);
         });
 
         socket.on("disconnect", () => {
             if (socket.userId) {
                 delete userSocketMap[socket.userId]; // Remove the mapping when the user disconnects
-                console.log(`User with  ${socket.userId} is disconnected`);
+                console.log(`User ${socket.userId} is disconnected`);
             }
 
-        });
+        }); 
     });
     return { io, userSocketMap }
 
