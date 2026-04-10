@@ -28,6 +28,7 @@ import playlistRouter from "./routes/playlist.routes.js"
 import subscriptionRouter from "./routes/subscription.routes.js"
 import likeRouter from "./routes/like.routes.js"
 import dashboardRouter from "./routes/dashboard.routes.js"
+import notificationRouter from "./routes/notification.routes.js"
 
 app.use("/api/v1/user",userRouter)   // prefix
 app.use("/api/v1/video",videoRouter)
@@ -37,6 +38,7 @@ app.use("/api/v1/playlist", playlistRouter)
 app.use("/api/v1/subscription", subscriptionRouter)
 app.use("/api/v1/likes", likeRouter)
 app.use("/api/v1/dashboard", dashboardRouter)
+app.use("/api/v1/notification", notificationRouter)
 
 
 export {app }
