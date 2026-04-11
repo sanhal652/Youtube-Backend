@@ -46,7 +46,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
             const receiverSocketId = userSocketMap[videoOwnerId]
 
             //increment the unread notification count for the video owner in redis cache
-            if (req.user?._id !== videoOwnerId)   //ensires we don't send a notificattion when the owner likes its own video
+            if (req.user?._id.toString() !== videoOwnerId.toString())   //ensires we don't send a notificattion when the owner likes its own video
                 await client.hIncrBy("notification:unread", videoOwnerId, 1)
 
             const currentUnreadCount = await client.hGet("notification:unread", videoOwnerId)
@@ -106,7 +106,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
             const tweetOwnerId = tweetOwner.owner.toString()
             const receiverSocketId = userSocketMap[tweetOwnerId]
 
-            if (req.user?._id !== tweetOwnerId)
+            if (req.user?._id.toString() !== tweetOwnerId.toString())
                 await client.hIncrBy("notification:unread", tweetOwnerId, 1)
 
             const currentTweetUnreadCount = await client.hGet("notification:unread", tweetOwnerId)
@@ -166,7 +166,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
             const commentOwnerId = commentOwner.owner.toString()
             const receiverSocketId = userSocketMap[commentOwnerId]
 
-            if (req.user?._id !== commentOwnerId)
+            if (req.user?._id.toString() !== commentOwnerId.toString())
                 await client.hIncrBy("notification:unread", commentOwnerId, 1)
 
             const commentUnreadCount = await client.hGet("notification:unread", commentOwnerId)
