@@ -22,10 +22,25 @@ export const initializeSocket = (server) => {
             socket.userId = userId; // Attach userId to the socket object for easy access later
             console.log(`User ${userId} connected with socket ID: ${socket.id}`);
         })
-        socket.on("joinVideo", (videoId) => {
-            socket.join(videoId);
-            console.log(`User ${socket.userId} joined room: ${videoId}`);
+        socket.on("joinVideo", (roomId) => {
+            socket.join(roomId);
+            console.log(`User ${socket.userId} joined room: ${roomId}`);
         });
+
+        socket.on("liveChat",({roomId,message,user})=>{
+
+            if( !roomId || !message)   return;
+
+            io.to(roomId).emit("received:Message",{
+                message,
+                from:{
+                    _id:socket.userId,
+                    username:user?.username,
+                    avatar:user?.avatar
+                },
+                timeStamp:new Date()
+            })
+        })
 
         socket.on("disconnect", () => {
             if (socket.userId) {
@@ -34,6 +49,7 @@ export const initializeSocket = (server) => {
             }
 
         }); 
+        
     });
     return { io, userSocketMap }
 

@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js"
 import mongoose from "mongoose"
 import { Subscription } from "../models/subscription.model.js";
 import { User } from "../models/user.model.js";
+import { client } from "../db/redis.js";
 
 
 //toggle subscription status 
@@ -48,6 +49,11 @@ const toggleSubscriptionStatus= asyncHandler(async (req,res) => {
         {
             const receiverSocketId= userSocketMap[channelId]
 
+            if(req.user?._id.toString()!==channelId.toString())
+                await client.hIncrBy("notification:unread",channelId,1)
+
+            const subscriberNotificationUnreadCount= await client.hGet("notification:unread",channelId)
+
             if(receiverSocketId)
             {
                 io.to(receiverSocketId).emit("notification",{
@@ -56,7 +62,8 @@ const toggleSubscriptionStatus= asyncHandler(async (req,res) => {
                         _id:req.user?._id,
                         username:req.user?.username,
                         avatar:req.user?.avatar
-                    }
+                    },
+                    unreadCount:subscriberNotificationUnreadCount
                 })
             }
         }

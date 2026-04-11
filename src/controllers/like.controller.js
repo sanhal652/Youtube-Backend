@@ -46,9 +46,10 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
             const receiverSocketId = userSocketMap[videoOwnerId]
 
             //increment the unread notification count for the video owner in redis cache
-            await client.hIncrBy("notification:unread",videoOwnerId,1)
+            if (req.user?._id !== videoOwnerId)   //ensires we don't send a notificattion when the owner likes its own video
+                await client.hIncrBy("notification:unread", videoOwnerId, 1)
 
-            const currentUnreadCount= await client.hGet("notification:unread",videoOwnerId)
+            const currentUnreadCount = await client.hGet("notification:unread", videoOwnerId)
 
             //emit data if owner is online
             if (receiverSocketId) {
@@ -59,7 +60,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
                         username: req.user?.username
                     },
                     videoId: videoId,
-                    unreadCount:currentUnreadCount   //in frontend it can be easily to display no.of notifications beside bell icon
+                    unreadCount: currentUnreadCount   //in frontend it can be easily to display no.of notifications beside bell icon
                 })
             }
         }
@@ -105,6 +106,11 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
             const tweetOwnerId = tweetOwner.owner.toString()
             const receiverSocketId = userSocketMap[tweetOwnerId]
 
+            if (req.user?._id !== tweetOwnerId)
+                await client.hIncrBy("notification:unread", tweetOwnerId, 1)
+
+            const currentTweetUnreadCount = await client.hGet("notification:unread", tweetOwnerId)
+
             if (receiverSocketId) {
                 io.to(receiverSocketId).emit("notification", {
                     message: "Somebody liked your tweet",
@@ -112,7 +118,8 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
                         _id: req.user?._id,
                         username: req.user?.username
                     },
-                    tweet: tweetId
+                    tweet: tweetId,
+                    unreadCount: currentTweetUnreadCount
                 })
             }
         }
@@ -150,24 +157,28 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
         if (!addLike)
             throw new ApiError(500, "Error in liking the comment")
 
-        const commentOwner= await Comment.findById(commentId).select("owner")
+        const commentOwner = await Comment.findById(commentId).select("owner")
 
-        const io=req.app.get("io")
-        const userSocketMap= req.app.get("userSocketMap")
+        const io = req.app.get("io")
+        const userSocketMap = req.app.get("userSocketMap")
 
-        if(commentOwner && commentOwner.owner)
-        {
-            const commentOwnerId= commentOwner.owner.toString()
-            const receiverSocketId= userSocketMap[commentOwnerId]
-            if(receiverSocketId)
-            {
-                io.to(receiverSocketId).emit("notification",{
-                    message:"Somebody liked your comment",
-                    from:{
-                        _id:req.user?._id,
-                        username:req.user?.username
+        if (commentOwner && commentOwner.owner) {
+            const commentOwnerId = commentOwner.owner.toString()
+            const receiverSocketId = userSocketMap[commentOwnerId]
+
+            if (req.user?._id !== commentOwnerId)
+                await client.hIncrBy("notification:unread", commentOwnerId, 1)
+
+            const commentUnreadCount = await client.hGet("notification:unread", commentOwnerId)
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit("notification", {
+                    message: "Somebody liked your comment",
+                    from: {
+                        _id: req.user?._id,
+                        username: req.user?.username
                     },
-                    comment:commentId
+                    comment: commentId,
+                    unreadCount: commentUnreadCount
                 })
             }
         }
