@@ -41,4 +41,7 @@ app.use("/api/v1/dashboard", dashboardRouter)
 app.use("/api/v1/notification", notificationRouter)
 
 
+import morgan from "morgan"
+app.use(morgan("dev"))
+
 export {app }

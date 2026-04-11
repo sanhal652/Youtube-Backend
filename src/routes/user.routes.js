@@ -2,7 +2,7 @@ import {Router} from "express"
 import { changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, refreshAccessToken, updateAccountDetails, updateAvatar, updateCoverImg, userLogin,userLogout, userRegister} from "../controllers/user.controller.js"
 import { upload } from "../middlewares/multer.middleware.js"
 import { verifyJwt } from "../middlewares/auth.middleware.js"
-
+import { loginLimiter } from "../middlewares/rateLimiter.middleware.js"
 
 const router=Router()
 
@@ -19,7 +19,7 @@ router.route("/register").post(
     ]),
     userRegister)   //suffix
 
-router.route("/login").post(userLogin)
+router.route("/login").post(loginLimiter,userLogin)
 
 //secured routes
 router.route("/logout").post(verifyJwt,userLogout)
