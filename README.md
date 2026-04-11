@@ -126,14 +126,14 @@ REDIS_URL=redis://localhost:6379
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/videotube-backend.git
+git clone https://github.com/sanhal652/Youtube-Backend.git
 cd videotube-backend
 
 # Install dependencies
 npm install
 
 # Create and configure .env file
-cp .env.example .env
+cp .env.sample .env
 
 # Start the development server
 npm run dev
@@ -274,4 +274,5 @@ npm run dev
 
 ## 👨‍💻 Author
 
-Built by [Sangita Halder](https://github.com/sanhal652)
+Built by [Sangita Halder]
+(https://github.com/sanhal652)
