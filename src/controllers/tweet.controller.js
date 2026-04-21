@@ -16,6 +16,8 @@ const addTweet= asyncHandler(async(req,res)=>{
     })
     if(!tweet)
         throw new ApiError(500,"Error in adding tweet")
+
+    await client.del(`user_tweets:${req.user?._id}`)
     return res.status(201).json(
        new ApiResponse( 201,tweet,"Tweet added successfully")
     )
@@ -32,11 +34,12 @@ const updateTweet= asyncHandler(async (req,res) => {
     if(!tweet)
         throw new ApiError(404,"Tweet does not exist")
     if(tweet.owner.toString()!==req.user?._id.toString())
-        throw new ApiError(403,"Unauthorized access, cant update tweet")
+        throw new ApiError(403,"Unauthorized access, can't update tweet")
     tweet.content=content
     const updatedTweet=await tweet.save({validateBeforeSave:false})
     if(!updatedTweet)
         throw new ApiError(500,"Error in updating tweet, please try again later")
+    await client.del(`user_tweets:${req.user?._id}`)
     return res.status(200).json(
         new ApiResponse(200,updatedTweet,"Tweet updated successfully")
     )
@@ -53,6 +56,7 @@ const deleteTweet= asyncHandler(async (req,res) => {
     const deletedTweet= await Tweet.findByIdAndDelete(tweetId)
     if(!deletedTweet)
         throw new ApiError(500,"Error in deletingtweet, please try again later")
+    await client.del(`user_tweets:${req.user?._id}`)
     return res.status(200).json(
         new ApiResponse(200,{},"Tweet deleted successfully")
     )

@@ -175,6 +175,12 @@ const updateVideo = asyncHandler(async (req, res) => {
         { new: true }
     )
 
+    await client.del(`video:${videoId}`)
+    const feedCacheKeys = await client.keys("all_videos:*")
+    if (feedCacheKeys.length > 0)
+        await client.del(feedCacheKeys)
+
+
     return res.status(200).json(
         new ApiResponse(200, updatedVideo, "Video updated successfully")
     )
@@ -458,6 +464,11 @@ const togglePublicStatus = asyncHandler(async (req, res) => {
         throw new ApiError(403, "Unauthorized request")
     video.isPublished = !video.isPublished
     await video.save({ validateBeforeSave: false })
+
+    await client.del(`video:${videoId}`)
+    const feedCacheKeys = await client.keys("all_videos:*")
+    if (feedCacheKeys.length > 0)
+        await client.del(feedCacheKeys)
 
     return res.status(200)
         .json(
