@@ -38,6 +38,10 @@ const videoSchema= new Schema({
     category:{
         type:Schema.Types.ObjectId,
         ref:"Category"
+    },
+    summary:{
+        type:String,
+        default:""
     }
    
 },{timestamps:true})
