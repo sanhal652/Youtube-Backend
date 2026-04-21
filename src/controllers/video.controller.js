@@ -72,6 +72,8 @@ const uploadVideo = asyncHandler(async (req, res) => {
     if (!videoDetails)
         throw new ApiError(404, "Video is not found")
 
+    //fetches data from mongodb if any data change occurs and update the cache, if there is no change in data then it will fetch data from cache until the cache expires
+
     const feedCacheKeys = await client.keys("all_videos:*")
     if (feedCacheKeys.length > 0)
         await client.del(feedCacheKeys)
@@ -117,7 +119,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
     await client.del(`video:${videoId}`)
     await client.del(`video_summary:${videoId}`)
 
-    // ← clear all videos feed cache
+    //  clear all videos feed cache
     const feedCacheKeys = await client.keys("all_videos:*")
     if (feedCacheKeys.length > 0)
         await client.del(feedCacheKeys)

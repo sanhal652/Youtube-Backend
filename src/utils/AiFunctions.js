@@ -35,7 +35,11 @@ export const aiVideoSummarizer = async (title, description) => {
         return text;
     } 
     catch (error) {
-        console.log("Ai error", error.message)
-        return null
+    if (error.message.includes("429")) {
+        console.log("Rate limit hit, please try again later")
+        return "Rate limit exceeded. Please try again later."
     }
+    console.log("Ai error:", error.message)
+    return null
+}
 }
