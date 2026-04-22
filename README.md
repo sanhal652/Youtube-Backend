@@ -8,8 +8,11 @@ A production-ready, feature-rich backend for a YouTube-like video sharing platfo
 
 - **Authentication** — JWT-based access & refresh token system with secure HTTP-only cookies
 - **Video Management** — Upload, update, delete, and fetch videos with Cloudinary integration
+- **AI Categorization** -Automatically categorizes videos on upload using Google Gemini AI |
+- **AI Summarization** -Generates concise video summaries on demand using Google Gemini AI |
 - **Redis Caching** — Caching on videos, comments, tweets, channel stats, and feeds for fast response times
 - **Real-time Notifications** — WebSocket-powered live notifications for likes, comments, and subscriptions using Socket.IO
+- **Cache Invalidation** - Stale cache is automatically cleared on every mutation |
 - **Unread Notification Count** — Redis hash-based unread notification tracking per user
 - **Self-interaction Prevention** — Owners don't receive notifications for their own likes/subscriptions
 - **Comments** — Paginated comments with user details
@@ -27,15 +30,45 @@ A production-ready, feature-rich backend for a YouTube-like video sharing platfo
 
 | Technology | Purpose |
 |---|---|
-| Node.js + Express | Server and REST API |
-| MongoDB + Mongoose | Primary database |
-| Redis | Caching and notification counters |
-| Socket.IO | Real-time WebSocket notifications |
-| Cloudinary | Video and image storage |
-| JWT | Authentication |
-| Multer | File upload handling |
-| express-rate-limit | Rate limiting |
-| bcrypt | Password hashing |
+| ⚙️ Node.js + Express | Server and REST API |
+| 🍃MongoDB + Mongoose | Primary database |
+| 🔴Redis | Caching and notification counters |
+| 🔌Socket.IO | Real-time WebSocket notifications |
+|  🤖 Google Gemini AI | Video categorization and summarization |
+| ☁️Cloudinary | Video and image storage |
+| 🔑JWT | Authentication |
+| 📦Multer | File upload handling |
+| 🛡️express-rate-limit | Rate limiting |
+| 🔒bcrypt | Password hashing |
+
+---
+
+## 🤖 AI Features
+
+### 🏷️ Auto Video Categorization
+When a video is uploaded, Gemini AI automatically analyzes the title and description and assigns the most appropriate category:
+
+> `Education` • `Entertainment` • `Technology` • `Lifestyle` • `Sports` • `Music` • `Travel` • `Food` • `Fashion` • `Gaming` • `Health and Fitness` • `Comedy` • `Science` • `Art and Culture` • `Business and Finance`
+
+### 📝 Video Summarization *(On Demand)*
+Generates a concise 2-3 sentence summary using a **3-layer fetching strategy** to minimize API costs:
+
+```
+Request comes in
+      │
+      ▼
+ Redis Cache ──── Hit ──────────────────► Return cached summary
+      │
+    Miss
+      │
+      ▼
+  MongoDB ──────── Has summary ─────────► Return & cache in Redis
+      │
+   No summary
+      │
+      ▼
+ Gemini AI ──────► Generate summary ───► Save to MongoDB + Redis ──► Return
+```
 
 ---
 
@@ -83,6 +116,7 @@ src/
 │   ├── ApiResponse.js
 │   ├── asyncHandler.js
 │   └── cloudinary.js
+    └── AiFunctions.js        # Gemini AI functions
 ├── app.js
 ├── socket.js
 ├── constants.js
@@ -116,6 +150,9 @@ CLOUDINARY_API_SECRET=your_api_secret
 
 # 🔴 Redis
 REDIS_URL=redis://localhost:6379
+
+# 🤖 Gemini AI
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
 ---
@@ -123,10 +160,11 @@ REDIS_URL=redis://localhost:6379
 ## 🏃 Getting Started
 
 ### Prerequisites
-- Node.js v18+
-- MongoDB (local or Atlas)
-- Redis (local or cloud)
-- Cloudinary account
+- ✅ Node.js v18+
+- ✅ MongoDB (local or Atlas)
+- ✅ Redis (local or cloud)
+- ✅ Cloudinary account
+- ✅ Google Gemini API key — free at [aistudio.google.com](https://aistudio.google.com)
 
 ### Installation
 
@@ -175,6 +213,7 @@ npm run dev
 | PATCH | `/:videoId` | Update video details | ✅ |
 | DELETE | `/:videoId` | Delete video | ✅ |
 | PATCH | `/toggle/:videoId` | Toggle publish status | ✅ |
+|  GET  | `/summary/:videoId` | Get AI-generated summary | ✅ |
 
 ### Comments — `/api/v1/comment`
 
@@ -223,14 +262,14 @@ npm run dev
 | GET | `/c/:channelId` | Get channel subscribers | ❌ |
 | GET | `/u/:userId` | Get subscribed channels | ✅ |
 
-### Dashboard — `/api/v1/dashboard`
+### 📊Dashboard — `/api/v1/dashboard`
 
 | Method | Endpoint | Description | Auth Required |
 |---|---|---|---|
 | GET | `/stats/:channelId` | Get channel stats (with caching) | ✅ |
 | GET | `/videos/:channelId` | Get all channel videos | ✅ |
 
-### Notifications — `/api/v1/notifications`
+### 🔕Notifications — `/api/v1/notifications`
 
 | Method | Endpoint | Description | Auth Required |
 |---|---|---|---|
@@ -267,6 +306,17 @@ npm run dev
 | `notification:unread` | Persistent hash | Per-user unread notification counts |
 
 ---
+
+### 🔄 Cache Invalidation Rules
+
+| 🎯 Action | 🗑️ Cache Cleared |
+|---|---|
+| Video uploaded | `all_videos:*` |
+| Video updated | `video:{id}` + `all_videos:*` |
+| Video deleted | `video:{id}` + `video_summary:{id}` + `all_videos:*` |
+| Comment mutation | `video_comments:{videoId}:*` |
+| Tweet mutation | `user_tweets:{userId}` |
+| Publish toggled | `video:{id}` + `all_videos:*` |
 
 ## 🔒 Security
 
