@@ -9,7 +9,6 @@ import { client } from "../db/redis.js"
 import { getCategoryOfVideos, aiVideoSummarizer } from "../utils/AiFunctions.js";
 import { Category } from "../models/category.model.js";
 
-//upload video
 
 const uploadVideo = asyncHandler(async (req, res) => {
 
@@ -500,14 +499,12 @@ const getVideoSummary = asyncHandler(async (req, res) => {
     let summary = video.summary
 
     //if not found in database then use open ai to generate the summary and store in database
-    if (!summary || !summary.trim()) {
-        console.log("Calling AI...")
+    if (!summary || !summary.trim() || summary === "No summary available" || summary === "Rate limit exceeded. Please try again later.") {
         summary = await aiVideoSummarizer(video.title, video.description)
-        console.log("AI response:", summary)
     }
-    if (!summary || summary === "No summary available.") {
-        throw new ApiError(500, "AI failed to generate a meaningful summary");
-    }
+    if (!summary || summary === "rate_limit")
+        throw new ApiError(503, "AI rate limit exceeded, please try again later")
+
     video.summary = summary
     await video.save({ validateBeforeSave: false })
 
