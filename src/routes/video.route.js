@@ -24,9 +24,5 @@ router.route("/video/:videoId").get(verifyJwt,getVideoById)
 router.route("/all-videos").get(verifyJwt,getAllVideos)
 router.route("/toggle/:videoId").patch(verifyJwt,togglePublicStatus)
 router.route("/summary/:videoId").get(verifyJwt,getVideoSummary)
-router.get("/clear-cache", async (req, res) => {
-    await client.flushAll()
-    res.json({ message: "Cache cleared successfully" })
-})
 
 export default router
