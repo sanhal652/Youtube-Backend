@@ -28,8 +28,8 @@ const videoSlice=createSlice({
             state.allVideos=state.allVideos.filter(video=>video._id!==action.payload);
             state.userVideos=state.userVideos.filter(video=>video._id!==action.payload);
         },
-        setLoading:(state)=>{
-            state.loading=true;
+        setLoading:(state,action)=>{
+            state.loading=action.payload;
         }
     }
 })
