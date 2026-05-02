@@ -1,32 +1,29 @@
-import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import {useForm} from "react-hook-form"
+import React from 'react'
+import { useDispatch } from 'react-redux'
+import { useForm } from "react-hook-form"
+import { userLogin } from '../axiosFiles/userApi'
+import { login } from "../store/authSlice"
+import { useState } from 'react'
+import { Link,useNavigate } from 'react-router-dom'
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useDispatch } from 'react-redux'
-import { login } from "../store/authSlice"
-import { userSignup } from '../axiosFiles/userApi'
 
-function SignUp() {
-    const navigate = useNavigate()
+function Login() {
+
     const dispatch = useDispatch()
+    const navigate=useNavigate()
     const { register, handleSubmit, formState: { errors } } = useForm()
     const [error, setError] = useState(null)
     const [loading, setLoading] = useState(false)
-
-    const signup = async (data) => {
+    const userLoginHandler = async (data) => {
         setError(null)
         setLoading(true)
         try {
-            const formData = new FormData();
-            formData.append("fullName", data.fullName)
-            formData.append("username", data.username)
-            formData.append("email", data.email)
-            formData.append("password", data.password)
-            formData.append("avatar", data.avatar[0])
-            formData.append("coverImage", data.coverImage[0])
-
-            const response = await userSignup(formData)
+            const response= await userLogin({
+                username:data.username,
+                email:data.email,
+                password:data.password
+            })
             dispatch(login(response.data))
             navigate("/")
         } catch (error) {
@@ -35,7 +32,7 @@ function SignUp() {
             setLoading(false)
         }
     }
-   return (
+     return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 py-8 px-4">
         <div className="mx-auto w-full max-w-lg bg-white rounded-2xl p-10 shadow-lg border border-gray-200">
 
@@ -45,15 +42,15 @@ function SignUp() {
                     VT
                 </div>
                 <h2 className="text-3xl font-extrabold text-gray-900">
-                    Create Account
+                    Login into your account
                 </h2>
                 <p className="mt-2 text-base text-gray-500">
-                    Already have an account?&nbsp;
+                    Don't have an account?&nbsp;
                     <Link
-                        to="/login"
+                        to="/signup"
                         className="font-semibold text-red-600 hover:text-red-500 hover:underline transition-all duration-200"
                     >
-                        Sign In
+                        Sign Up
                     </Link>
                 </p>
             </div>
@@ -66,24 +63,8 @@ function SignUp() {
             )}
 
             {/* Form */}
-            <form onSubmit={handleSubmit(signup)}>
+            <form onSubmit={handleSubmit(userLoginHandler)}>
                 <div className="space-y-5">
-
-                    {/* Full Name */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Full Name
-                        </label>
-                        <Input
-                            placeholder="Enter your full name"
-                            type="text"
-                            className="w-full border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                            {...register("fullName", { required: true })}
-                        />
-                        {errors.fullName && (
-                            <p className="text-red-500 text-xs mt-1">Full name is required</p>
-                        )}
-                    </div>
 
                     {/* Username */}
                     <div>
@@ -94,11 +75,11 @@ function SignUp() {
                             placeholder="Enter your username"
                             type="text"
                             className="w-full border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                            {...register("username", { required: true })}
+                            {...register("username")}
                         />
-                        {errors.username && (
+                        {/* {errors.username && (
                             <p className="text-red-500 text-xs mt-1">Username is required</p>
-                        )}
+                        )} */}
                     </div>
 
                     {/* Email */}
@@ -111,7 +92,6 @@ function SignUp() {
                             type="email"
                             className="w-full border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500"
                             {...register("email", {
-                                required: true,
                                 validate: {
                                     matchPattern: (value) =>
                                         /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(value) ||
@@ -119,11 +99,11 @@ function SignUp() {
                                 }
                             })}
                         />
-                        {errors.email && (
+                        {/* {errors.email && (
                             <p className="text-red-500 text-xs mt-1">
                                 {errors.email.message || "Email is required"}
                             </p>
-                        )}
+                        )} */}
                     </div>
 
                     {/* Password */}
@@ -142,38 +122,6 @@ function SignUp() {
                         )}
                     </div>
 
-                    {/* Avatar */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Avatar <span className="text-red-500">*</span>
-                        </label>
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-red-400 transition-colors">
-                            <Input
-                                type="file"
-                                accept="image/*"
-                                className="w-full text-sm text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-red-50 file:text-red-600 hover:file:bg-red-100"
-                                {...register("avatar", { required: true })}
-                            />
-                        </div>
-                        {errors.avatar && (
-                            <p className="text-red-500 text-xs mt-1">Avatar is required</p>
-                        )}
-                    </div>
-
-                    {/* Cover Image */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Cover Image <span className="text-gray-400 text-xs">(optional)</span>
-                        </label>
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-red-400 transition-colors">
-                            <Input
-                                type="file"
-                                accept="image/*"
-                                className="w-full text-sm text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-red-50 file:text-red-600 hover:file:bg-red-100"
-                                {...register("coverImage")}
-                            />
-                        </div>
-                    </div>
 
                     {/* Submit Button */}
                     <Button
@@ -181,7 +129,7 @@ function SignUp() {
                         disabled={loading}
                         className={`w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-all duration-300 shadow-md active:scale-[0.98] mt-2 ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
                     >
-                        {loading ? "Creating Account..." : "Get Started →"}
+                        {loading ? "Logging in..." : "Log in →"}
                     </Button>
 
                 </div>
@@ -191,4 +139,4 @@ function SignUp() {
 )
 }
 
-export default SignUp;
+export default Login
