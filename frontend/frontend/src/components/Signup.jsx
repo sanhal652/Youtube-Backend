@@ -30,7 +30,7 @@ function SignUp() {
             dispatch(login(response.data))
             navigate("/")
         } catch (error) {
-            setError(error.response?.data?.message)
+            setError("User already exists with the provided email or username. Please try again with different credentials.")
         } finally {
             setLoading(false)
         }

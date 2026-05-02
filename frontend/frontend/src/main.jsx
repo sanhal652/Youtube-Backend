@@ -7,6 +7,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import Signup from './components/Signup'
 import Login from './components/Login'
+import Homefeed from './components/Homefeed'
 
 const router = createBrowserRouter([
     {
@@ -15,9 +16,7 @@ const router = createBrowserRouter([
         children: [
             {
                 index: true,
-                element: <div className="p-10">
-                    <h1 className="text-3xl font-bold">Welcome to the Home Feed!</h1>
-                </div>
+                element: <Homefeed />
             },
             {
                 path: '/signup',
