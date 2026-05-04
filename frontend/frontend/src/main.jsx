@@ -8,6 +8,7 @@ import { Layout } from './components/Layout'
 import Signup from './components/Signup'
 import Login from './components/Login'
 import Homefeed from './components/Homefeed'
+import AuthCheck from './components/AuthCheck'
 
 const router = createBrowserRouter([
     {
@@ -33,7 +34,9 @@ const router = createBrowserRouter([
 createRoot(document.getElementById('root')).render(
     <StrictMode>
         <Provider store={store}>
-            <RouterProvider router={router} />
+            <AuthCheck>
+                <RouterProvider router={router} />
+            </AuthCheck>
         </Provider>
     </StrictMode>
 )
