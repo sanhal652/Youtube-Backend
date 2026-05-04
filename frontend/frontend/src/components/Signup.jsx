@@ -13,10 +13,11 @@ function SignUp() {
     const { register, handleSubmit, formState: { errors } } = useForm()
     const [error, setError] = useState(null)
     const [loading, setLoading] = useState(false)
-
+    const[success,setSuccess]=useState(null)
     const signup = async (data) => {
         setError(null)
         setLoading(true)
+        setSuccess(null)
         try {
             const formData = new FormData();
             formData.append("fullName", data.fullName)
@@ -28,7 +29,11 @@ function SignUp() {
 
             const response = await userSignup(formData)
             dispatch(login(response.data))
+            setSuccess("Account created successfully!")
+            setTimeout(() => {
             navigate("/")
+        },1000)
+           
         } catch (error) {
             setError("User already exists with the provided email or username. Please try again with different credentials.")
         } finally {
@@ -62,6 +67,13 @@ function SignUp() {
             {error && (
                 <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg">
                     <p className="text-red-600 text-sm text-center">{error}</p>
+                </div>
+            )}
+
+            {/* Success Message */}
+            {success && (
+                <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-green-600 text-sm text-center">{success}</p>
                 </div>
             )}
 
