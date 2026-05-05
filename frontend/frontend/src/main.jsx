@@ -10,7 +10,6 @@ import Login from './components/Login'
 import Homefeed from './components/Homefeed'
 import AuthCheck from './components/AuthCheck'
 import UploadVideo from './components/UploadVideo'
-
 const router = createBrowserRouter([
     {
         path: '/',

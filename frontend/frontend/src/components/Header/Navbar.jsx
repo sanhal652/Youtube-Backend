@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Search, Bell, Upload, Menu } from "lucide-react";
 import { useSelector } from "react-redux";
+import Logout from "../Logout";
 
 export const Navbar = () => {
   const { status, userData } = useSelector(state => state.auth)
@@ -57,6 +58,8 @@ export const Navbar = () => {
             >
               <Bell className="w-5 h-5" />
             </Button>
+
+           <Logout />
 
             {/* Avatar */}
             <button

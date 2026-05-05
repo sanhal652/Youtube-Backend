@@ -24,7 +24,7 @@ function Login() {
                 email:data.email,
                 password:data.password
             })
-            dispatch(login(response.data))
+            dispatch(login(response.data.user))
             navigate("/")
         } catch (error) {
             setError(error.response?.data?.message)
