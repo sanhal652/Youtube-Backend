@@ -77,9 +77,6 @@ function Login() {
                             className="w-full border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500"
                             {...register("username")}
                         />
-                        {/* {errors.username && (
-                            <p className="text-red-500 text-xs mt-1">Username is required</p>
-                        )} */}
                     </div>
 
                     {/* Email */}
@@ -99,11 +96,6 @@ function Login() {
                                 }
                             })}
                         />
-                        {/* {errors.email && (
-                            <p className="text-red-500 text-xs mt-1">
-                                {errors.email.message || "Email is required"}
-                            </p>
-                        )} */}
                     </div>
 
                     {/* Password */}

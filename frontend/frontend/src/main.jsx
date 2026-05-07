@@ -10,6 +10,8 @@ import Login from './components/Login'
 import Homefeed from './components/Homefeed'
 import AuthCheck from './components/AuthCheck'
 import UploadVideo from './components/UploadVideo'
+import Channel from './components/Channel'
+import EditChannel from './components/EditChannel'
 const router = createBrowserRouter([
     {
         path: '/',
@@ -30,6 +32,14 @@ const router = createBrowserRouter([
             {
                 path:'/upload',
                 element:<UploadVideo/>
+            },
+            {
+                path:'/channel/:username',
+                element:<Channel />
+            },
+            {
+                path:"/edit-channel",
+                element:<EditChannel />
             }
         ]
     }

@@ -116,8 +116,10 @@ const getChannelVideos = asyncHandler(async (req, res) => {
     const videos = await Videos.find({
         owner: channelId
     })
-        .select("title description owner thumbnail")
+        .select("title description owner thumbnail views createdAt duration")
+        .populate("owner", "username avatar")
         .sort("-createdAt")
+        
 
     if (!videos)
         throw new ApiError(500, "Error in fetching the videos")

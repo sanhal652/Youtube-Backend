@@ -10,7 +10,7 @@ export const Navbar = () => {
 
   return (
     <nav className="sticky top-0 z-50 flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200 shadow-sm">
-      
+
       {/* 1. Logo */}
       <Link to="/" className="flex items-center gap-1 shrink-0">
         <div className="bg-red-600 text-white font-bold text-sm px-2 py-1 rounded">
@@ -59,11 +59,18 @@ export const Navbar = () => {
               <Bell className="w-5 h-5" />
             </Button>
 
-           <Logout />
+            <Logout />
 
             {/* Avatar */}
             <button
-              onClick={() => navigate(`/channel/${userData?.username}`)}
+              onClick={() => {
+                if (userData?.username) {
+                  navigate(`/channel/${userData.username}`);
+                } else {
+                  // Optional: show a toast or alert
+                  console.warn("User data not loaded yet");
+                }
+              }}
               className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200 hover:border-blue-500 transition-colors"
             >
               <img

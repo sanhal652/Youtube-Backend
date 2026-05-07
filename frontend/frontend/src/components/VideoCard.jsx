@@ -21,7 +21,11 @@ function VideoCard({ video }) {
                     onError={(e) => e.target.src = "https://placehold.co/640x360?text=No+Thumbnail"}
                 />
                 <span className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded font-medium">
-                    {Math.floor(video.duration / 60)}:{String(Math.floor(video.duration % 60)).padStart(2, '0')}
+                   {video.duration ? (
+    <span className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded font-medium">
+        {Math.floor(video.duration / 60)}:{String(Math.floor(video.duration % 60)).padStart(2, '0')}
+    </span>
+) : null}
                 </span>
             </div>
 

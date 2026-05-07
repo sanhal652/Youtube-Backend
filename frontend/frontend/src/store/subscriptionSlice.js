@@ -17,7 +17,7 @@ const subscriptionSlice= createSlice({
         getUserSubscribedChannels:(state,action)=>{      //how many channel i subscribed
             state.userSubscribedChannels=action.payload;
         },
-        toggleSubscriptionStatus:(state,action)=>{
+        toggleSubscriptionStatusStore:(state,action)=>{
             const {channelId}= action.payload;
             const isSubscribed=state.userSubscribedChannels.find(channel=>channel._id===channelId)
             if(isSubscribed){
@@ -30,4 +30,4 @@ const subscriptionSlice= createSlice({
 })
 
 export default subscriptionSlice.reducer;
-export const { getUserSubscribers, getUserSubscribedChannels,toggleSubscriptionStatus }= subscriptionSlice.actions;
+export const { getUserSubscribers, getUserSubscribedChannels,toggleSubscriptionStatusStore }= subscriptionSlice.actions;
