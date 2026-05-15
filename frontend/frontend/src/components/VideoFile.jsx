@@ -1,16 +1,230 @@
-import React,{useState} from 'react'
-import { useDispatch } from 'react-redux'
+import { getVideoDetails } from '@/axiosFiles/videoApi'
+import React, { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { useParams } from 'react-router-dom'
+import { fetchCurrentVideo } from '@/store/videoSlice'
+import { toggleLikeStatusApi } from '@/axiosFiles/likeApi'
+import { toggleLikeStatus } from '@/store/likeSlice'
+import { Button } from './ui/button'
+import { toggleSubscriptionStatus } from '@/axiosFiles/subscriptionApi'
+import { toggleSubscriptionStatusStore } from '@/store/subscriptionSlice'
+import { ThumbsUp, Bell, BellOff } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+
 function VideoFile() {
-    const [videos,setVideos]= useState([])
-    const[loading,setLoading]=useState(null)
-    const[error,setError]= useState(null)
-    const dispatch= useDispatch()
-    const navigate= useNavigate()
-    const getVideo= async()
-  return (
-    <div>VideoFile</div>
-  )
+    const navigate = useNavigate()
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState(null)
+    const [likes, setLikes] = useState(0)
+    const dispatch = useDispatch()
+
+    const { videoId } = useParams()
+    const { currentVideo } = useSelector(state => state.video)
+    const { likedVideos } = useSelector(state => state.like)
+    const isLiked = likedVideos.some(v => v._id === videoId)
+    const { userSubscribedChannels } = useSelector(state => state.subscription)
+    const isSubscribed = userSubscribedChannels.some(
+        channel => channel._id === currentVideo?.owner?._id
+    )
+
+    useEffect(() => {
+        const getVideo = async () => {
+            setError(null)
+            setLoading(true)
+            try {
+                const response = await getVideoDetails(videoId)
+                if (response.success) {
+                    dispatch(fetchCurrentVideo(response.data))
+                }
+            } catch (error) {
+                console.log("Error fetching video", error)
+                setError("Failed to load video")
+            } finally {
+                setLoading(false)
+            }
+        }
+        if (videoId) getVideo()
+    }, [videoId])
+
+    useEffect(() => {
+        if (currentVideo) {
+            setLikes(currentVideo.totalLikes)
+        }
+    }, [currentVideo])
+
+    const handleLike = async () => {
+        try {
+            const response = await toggleLikeStatusApi(videoId)
+            if (response.success) {
+                dispatch(toggleLikeStatus({ videoId, video: currentVideo }))
+                setLikes(prev => isLiked ? prev - 1 : prev + 1)
+            }
+
+        } catch (error) {
+            console.log("Like failed", error)
+        }
+    }
+
+    const handleSubscribe = async () => {
+        try {
+            const response = await toggleSubscriptionStatus(currentVideo?.owner?._id)
+            if (response.success) {
+                dispatch(toggleSubscriptionStatusStore({
+                    channelId: currentVideo?.owner?._id
+                }))
+            }
+        } catch (error) {
+            console.log("Subscription failed", error)
+        }
+    }
+
+    if (loading) return (
+        <div className="flex items-center justify-center min-h-screen">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600" />
+        </div>
+    )
+
+    if (error) return (
+        <div className="flex items-center justify-center min-h-screen">
+            <p className="text-red-500 text-lg">{error}</p>
+        </div>
+    )
+
+    if (!currentVideo) return null
+
+    return (
+        <div className="max-w-6xl mx-auto px-4 py-6">
+            <div className="flex flex-col lg:flex-row gap-6">
+
+                {/* Left — Video + Details */}
+                <div className="flex-1">
+
+                    {/* Video Player */}
+                    <div className="w-full rounded-xl overflow-hidden bg-black aspect-video">
+                        <video
+                            src={currentVideo?.videoFile}
+                            controls
+                            className="w-full h-full"
+                        />
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="text-xl font-bold text-gray-900 mt-4">
+                        {currentVideo?.title}
+                    </h3>
+
+                    {/* Views + Date */}
+                    <p className="text-sm text-gray-500 mt-1">
+                        {currentVideo?.views} views • {new Date(currentVideo?.createdAt).toDateString()}
+                    </p>
+
+                    {/* Outer wrapper — stacks actions row and description on the left */}
+                    <div className="flex flex-col mt-4 pb-4 border-b border-gray-200">
+
+                        {/* Owner + Actions Row */}
+                        <div className="flex flex-row items-center justify-between gap-4">
+
+                            {/* Owner Info + Subscribe */}
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => {
+                                        if (currentVideo?.owner?.username) {
+                                            navigate(`/channel/${currentVideo.owner.username}`);
+                                        } else {
+                                            // Optional: show a toast or alert
+                                            console.warn("User data not loaded yet");
+                                        }
+                                    }}>
+                                    <img
+                                        src={currentVideo?.owner?.avatar}
+                                        alt={currentVideo?.owner?.username}
+                                        className="w-11 h-11 rounded-full object-cover"
+                                        onError={(e) => e.target.src = "https://placehold.co/44x44?text=U"}
+                                    />
+                                </button>
+                                <div>
+                                    <p className="font-semibold text-gray-900 text-sm">
+                                        {currentVideo?.owner?.username}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        {currentVideo?.totalLikes} likes
+                                    </p>
+                                </div>
+
+                                <Button
+                                    onClick={handleSubscribe}
+                                    className={`ml-4 rounded-full px-5 py-2 text-sm font-semibold transition-all ${isSubscribed
+                                        ? "bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300"
+                                        : "bg-red-600 hover:bg-red-700 text-white"
+                                        }`}
+                                >
+                                    {isSubscribed ? (
+                                        <span className="flex items-center gap-1">
+                                            <BellOff className="w-4 h-4" /> Subscribed
+                                        </span>
+                                    ) : (
+                                        <span className="flex items-center gap-1">
+                                            <Bell className="w-4 h-4" /> Subscribe
+                                        </span>
+                                    )}
+                                </Button>
+                            </div>
+
+                            {/* Like Button — stays on the right */}
+                            <Button
+                                onClick={handleLike}
+                                className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-all ${isLiked
+                                    ? "bg-red-100 text-red-600 border border-red-300 hover:bg-red-200"
+                                    : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                                    }`}
+                            >
+                                <ThumbsUp className={`w-4 h-4 ${isLiked ? "fill-red-600" : ""}`} />
+                                {isLiked ? "Liked" : "Like"}
+                                <span className="ml-1 text-xs">({likes})</span>
+                            </Button>
+                        </div>
+
+                        {/* Description — left-aligned, below owner/subscribe */}
+                        <div className="mt-3 bg-gray-50 rounded-xl p-4 self-start">
+                            <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                                {currentVideo?.description}
+                            </p>
+                        </div>
+
+                    </div>
+
+
+
+                    {/* Comments Section */}
+                    <div className="mt-6">
+                        <h2 className="text-lg font-bold text-gray-900 mb-4">
+                            {currentVideo?.totalComments} Comments
+                        </h2>
+                        <div className="space-y-4">
+                            {currentVideo?.recentComments?.map(comment => (
+                                <div key={comment._id} className="flex gap-3">
+                                    <img
+                                        src={comment.commentedBy?.avatar}
+                                        alt={comment.commentedBy?.username}
+                                        className="w-8 h-8 rounded-full object-cover shrink-0"
+                                        onError={(e) => e.target.src = "https://placehold.co/32x32?text=U"}
+                                    />
+                                    <div>
+                                        <p className="text-sm font-semibold text-gray-900">
+                                            {comment.commentedBy?.username}
+                                        </p>
+                                        <p className="text-sm text-gray-700 mt-0.5">
+                                            {comment.content}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
 }
 
 export default VideoFile

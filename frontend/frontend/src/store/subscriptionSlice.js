@@ -11,10 +11,10 @@ const subscriptionSlice= createSlice({
     name:"subscription",
     initialState,
     reducers:{
-        getUserSubscribers:(state,action)=>{   //how many people subscribed to my channel
+        getUserSubscribersStore:(state,action)=>{   //how many people subscribed to my channel
             state.userSubscribers=action.payload;
         },
-        getUserSubscribedChannels:(state,action)=>{      //how many channel i subscribed
+        getUserSubscribedChannelsStore:(state,action)=>{      //how many channel i subscribed
             state.userSubscribedChannels=action.payload;
         },
         toggleSubscriptionStatusStore:(state,action)=>{
@@ -23,11 +23,11 @@ const subscriptionSlice= createSlice({
             if(isSubscribed){
                 state.userSubscribedChannels=state.userSubscribedChannels.filter(channel=>channel._id!==channelId)
             } else {
-                state.userSubscribedChannels.push(action.payload)
+                state.userSubscribedChannels.push({_id: channelId})
             }
         }
     }
 })
 
 export default subscriptionSlice.reducer;
-export const { getUserSubscribers, getUserSubscribedChannels,toggleSubscriptionStatusStore }= subscriptionSlice.actions;
+export const { getUserSubscribersStore, getUserSubscribedChannelsStore,toggleSubscriptionStatusStore }= subscriptionSlice.actions;

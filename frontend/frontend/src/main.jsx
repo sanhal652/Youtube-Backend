@@ -12,6 +12,7 @@ import AuthCheck from './components/AuthCheck'
 import UploadVideo from './components/UploadVideo'
 import Channel from './components/Channel'
 import EditChannel from './components/EditChannel'
+import VideoFile from './components/VideoFile'
 const router = createBrowserRouter([
     {
         path: '/',
@@ -40,6 +41,10 @@ const router = createBrowserRouter([
             {
                 path:"/edit-channel",
                 element:<EditChannel />
+            },
+            {
+                path:'/video/:videoId',
+                element: <VideoFile />
             }
         ]
     }

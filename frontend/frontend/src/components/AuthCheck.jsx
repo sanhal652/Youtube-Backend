@@ -5,6 +5,8 @@
 import { useEffect,useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { getCurrentUser } from '../axiosFiles/userApi'
+import { getUserSubscribedChannelsStore } from '@/store/subscriptionSlice'
+import { getSubscribedChannels } from '@/axiosFiles/subscriptionApi'
 import { login } from '../store/authSlice'
 
 const AuthCheck = ({ children }) => {
@@ -17,6 +19,13 @@ const AuthCheck = ({ children }) => {
                 const response = await getCurrentUser()
                 if (response.success) {
                     dispatch(login(response.data))
+
+                    //fetch subscribed channels and store in redux
+                    const subscribedChannel= await getSubscribedChannels()
+                    if(subscribedChannel?.success)
+                    {
+                        dispatch(getUserSubscribedChannelsStore(subscribedChannel.data))
+                    }
                 }
             } catch (error) {
                 console.log(error)
