@@ -14,7 +14,11 @@ const commentSchema= new Schema({
     video:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Videos"
-    }
+    },
+    totalLikes: {
+    type: Number,
+    default: 0
+}
     
 },{timestamps:true})
 

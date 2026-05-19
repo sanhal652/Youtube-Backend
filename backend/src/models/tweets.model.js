@@ -8,7 +8,11 @@ const tweetSchema= new Schema({
     content:{
         type:String,
         required:true
-    }
+    },
+    totalLikes: {
+    type: Number,
+    default: 0
+}
 },{timestamps:true})
 
 export const Tweet= mongoose.model("Tweet",tweetSchema)

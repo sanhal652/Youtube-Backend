@@ -42,7 +42,11 @@ const videoSchema= new Schema({
     summary:{
         type:String,
         default:""
-    }
+    },
+    totalLikes: {
+    type: Number,
+    default: 0
+}
    
 },{timestamps:true})
 

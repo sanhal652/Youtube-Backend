@@ -9,10 +9,10 @@ const likeSlice= createSlice({
     name: "like",
     initialState,
     reducers:{
-        getLikedVideos:(state,action)=>{
+        getLikedVideosStore:(state,action)=>{
             state.likedVideos=action.payload;
         },
-        toggleLikeStatus:(state,action)=>{
+        toggleLikeStatusStore:(state,action)=>{
             const {videoId,video}=action.payload;
             const isLiked= state.likedVideos.find(v=>v._id===videoId)
             if(isLiked){
@@ -28,4 +28,4 @@ const likeSlice= createSlice({
 })
 
 export default likeSlice.reducer;
-export const{ getLikedVideos,toggleLikeStatus,setLoading }= likeSlice.actions;
+export const{ getLikedVideosStore,toggleLikeStatusStore,setLoading }= likeSlice.actions;

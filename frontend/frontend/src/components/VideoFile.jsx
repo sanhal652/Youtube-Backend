@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useParams } from 'react-router-dom'
 import { fetchCurrentVideo } from '@/store/videoSlice'
 import { toggleLikeStatusApi } from '@/axiosFiles/likeApi'
-import { toggleLikeStatus } from '@/store/likeSlice'
+import { toggleLikeStatusStore } from '@/store/likeSlice'
 import { Button } from './ui/button'
 import { toggleSubscriptionStatus } from '@/axiosFiles/subscriptionApi'
 import { toggleSubscriptionStatusStore } from '@/store/subscriptionSlice'
@@ -56,7 +56,7 @@ function VideoFile() {
         try {
             const response = await toggleLikeStatusApi(videoId)
             if (response.success) {
-                dispatch(toggleLikeStatus({ videoId, video: currentVideo }))
+                dispatch(toggleLikeStatusStore({ videoId, video: currentVideo }))
                 setLikes(prev => isLiked ? prev - 1 : prev + 1)
             }
 

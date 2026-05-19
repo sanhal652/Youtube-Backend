@@ -8,6 +8,8 @@ import { getCurrentUser } from '../axiosFiles/userApi'
 import { getUserSubscribedChannelsStore } from '@/store/subscriptionSlice'
 import { getSubscribedChannels } from '@/axiosFiles/subscriptionApi'
 import { login } from '../store/authSlice'
+import { getLikedVideosApi } from '@/axiosFiles/likeApi'
+import { getLikedVideosStore } from '@/store/likeSlice'
 
 const AuthCheck = ({ children }) => {
     const dispatch = useDispatch()
@@ -25,6 +27,13 @@ const AuthCheck = ({ children }) => {
                     if(subscribedChannel?.success)
                     {
                         dispatch(getUserSubscribedChannelsStore(subscribedChannel.data))
+                    }
+
+                    //fetch liked videos and store in redux
+                    const likedVideos= await getLikedVideosApi()
+                    if(likedVideos?.success)
+                    {
+                        dispatch(getLikedVideosStore(likedVideos.data))
                     }
                 }
             } catch (error) {

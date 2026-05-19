@@ -22,6 +22,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         const removeLike = await Likes.findByIdAndDelete(alreadyLiked._id)
         if (!removeLike)
             throw new ApiError(500, "Error in removing like")
+        await Videos.findByIdAndUpdate(videoId, { $inc: { totalLikes: -1 } })  //decrementing the like count in video document
         return res.status(200)
             .json(
                 new ApiResponse(200, { isLiked: false }, "Video unliked successfully")
@@ -34,7 +35,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         })
         if (!addLike)
             throw new ApiError(500, "Error in liking the video")
-
+        await Videos.findByIdAndUpdate(videoId, { $inc: { totalLikes: 1 } })  //incrementing the like count in video document
         //including web sockets to notify the video owner about the new like
 
         const videoOwner = await Videos.findById(videoId).select("owner")
@@ -64,7 +65,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
                 })
             }
         }
-
+        
         return res.status(200)
             .json(
                 new ApiResponse(200, { ...addLike._doc, isLiked: true }, "Video liked successfully")
@@ -86,6 +87,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
         const removeLike = await Likes.findByIdAndDelete(alreadyLiked._id)
         if (!removeLike)
             throw new ApiError(500, "Error in removing like")
+        await Tweet.findByIdAndUpdate(tweetId, { $inc: { totalLikes: -1 } })  //decrementing the like count in tweet document
         return res.status(200)
             .json(
                 new ApiResponse(200, { isLiked: false }, "Tweet unliked successfully")
@@ -99,6 +101,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
         if (!addLike)
             throw new ApiError(500, "Error in liking the tweet")
 
+        await Tweet.findByIdAndUpdate(tweetId, { $inc: { totalLikes: 1 } })  //incrementing the like count in tweet document
         const tweetOwner = await Tweet.findById(tweetId).select("owner")
         const io = req.app.get("io")
         const userSocketMap = req.app.get("userSocketMap")
@@ -144,6 +147,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
         const removeLike = await Likes.findByIdAndDelete(alreadyLiked._id)
         if (!removeLike)
             throw new ApiError(500, "Error in removing like from comment")
+        await Comment.findByIdAndUpdate(commentId, { $inc: { totalLikes: -1 } })  //decrementing the like count in comment document
         return res.status(200)
             .json(
                 new ApiResponse(200, { isLiked: false }, "Comment unliked successfully")
@@ -156,7 +160,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
         })
         if (!addLike)
             throw new ApiError(500, "Error in liking the comment")
-
+        await Comment.findByIdAndUpdate(commentId, { $inc: { totalLikes: 1 } })  //incrementing the like count in comment document
         const commentOwner = await Comment.findById(commentId).select("owner")
 
         const io = req.app.get("io")
@@ -239,10 +243,16 @@ const getLikedVideos = asyncHandler(async (req, res) => {
                 }
             }
         },
+
         {
             // This makes the 'video' object the root of the result
             $replaceRoot: { newRoot: "$video" }
 
+        },
+        {
+            $addFields: {
+                isLiked: true
+            }
         }
     ])
     if (!allVideos)
