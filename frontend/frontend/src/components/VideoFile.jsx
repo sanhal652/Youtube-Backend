@@ -1,7 +1,7 @@
 import { getVideoDetails } from '@/axiosFiles/videoApi'
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { fetchCurrentVideo } from '@/store/videoSlice'
 import { toggleLikeStatusApi } from '@/axiosFiles/likeApi'
 import { toggleLikeStatusStore } from '@/store/likeSlice'
@@ -9,24 +9,27 @@ import { Button } from './ui/button'
 import { toggleSubscriptionStatus } from '@/axiosFiles/subscriptionApi'
 import { toggleSubscriptionStatusStore } from '@/store/subscriptionSlice'
 import { ThumbsUp, Bell, BellOff } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 
 function VideoFile() {
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
-    const [likes, setLikes] = useState(0)
     const dispatch = useDispatch()
 
     const { videoId } = useParams()
     const { currentVideo } = useSelector(state => state.video)
     const { likedVideos } = useSelector(state => state.like)
-    const isLiked = likedVideos.some(v => v._id === videoId)
     const { userSubscribedChannels } = useSelector(state => state.subscription)
+
+    // 1. Unified Local States for Instant UI Interactions
+    const [likes, setLikes] = useState(0)
+    const [isActiveLiked, setIsActiveLiked] = useState(false) // 🟢 Tracks instant UI color/text updates
+
     const isSubscribed = userSubscribedChannels.some(
         channel => channel._id === currentVideo?.owner?._id
     )
 
+    // 2. Fetch Video Data on Mount or Route Param Shifts
     useEffect(() => {
         const getVideo = async () => {
             setError(null)
@@ -44,22 +47,30 @@ function VideoFile() {
             }
         }
         if (videoId) getVideo()
-    }, [videoId])
+    }, [videoId, dispatch])
 
+    // 3. 🟢 THE REFRESH SYNC: Handles populating state when network requests complete
     useEffect(() => {
         if (currentVideo) {
-            setLikes(currentVideo.totalLikes)
+            setLikes(currentVideo.totalLikes);
+            // Derive the initial button visual status from Redux list records safely
+            setIsActiveLiked(likedVideos.some(v => v._id === videoId));
         }
-    }, [currentVideo])
+    }, [currentVideo?.totalLikes, currentVideo?._id, likedVideos, videoId]);
 
+    // 4. Optimized Instant Layout Toggling Function
     const handleLike = async () => {
+        const wasLiked = isActiveLiked // 🟢 Base decisions off the immediate active state tracker
         try {
             const response = await toggleLikeStatusApi(videoId)
             if (response.success) {
+                // 🟢 Update counter and button style together instantly
+                setLikes(prev => wasLiked ? prev - 1 : prev + 1)
+                setIsActiveLiked(!wasLiked)
+                
+                // Keep background Redux models populated cleanly
                 dispatch(toggleLikeStatusStore({ videoId, video: currentVideo }))
-                setLikes(prev => isLiked ? prev - 1 : prev + 1)
             }
-
         } catch (error) {
             console.log("Like failed", error)
         }
@@ -90,6 +101,7 @@ function VideoFile() {
         </div>
     )
 
+    // Layout Guard: Wait for Redux payload hydration before trying to read fields
     if (!currentVideo) return null
 
     return (
@@ -118,7 +130,6 @@ function VideoFile() {
                         {currentVideo?.views} views • {new Date(currentVideo?.createdAt).toDateString()}
                     </p>
 
-                    {/* Outer wrapper — stacks actions row and description on the left */}
                     <div className="flex flex-col mt-4 pb-4 border-b border-gray-200">
 
                         {/* Owner + Actions Row */}
@@ -131,7 +142,6 @@ function VideoFile() {
                                         if (currentVideo?.owner?.username) {
                                             navigate(`/channel/${currentVideo.owner.username}`);
                                         } else {
-                                            // Optional: show a toast or alert
                                             console.warn("User data not loaded yet");
                                         }
                                     }}>
@@ -147,7 +157,7 @@ function VideoFile() {
                                         {currentVideo?.owner?.username}
                                     </p>
                                     <p className="text-xs text-gray-500">
-                                        {currentVideo?.totalLikes} likes
+                                        {likes} likes
                                     </p>
                                 </div>
 
@@ -170,21 +180,22 @@ function VideoFile() {
                                 </Button>
                             </div>
 
-                            {/* Like Button — stays on the right */}
+                            {/* Like Button */}
                             <Button
                                 onClick={handleLike}
-                                className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-all ${isLiked
-                                    ? "bg-red-100 text-red-600 border border-red-300 hover:bg-red-200"
-                                    : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
-                                    }`}
+                                className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-all ${
+                                    isActiveLiked // 🟢 Tracks instant responsive design class shifts
+                                        ? "bg-red-100 text-red-600 border border-red-300 hover:bg-red-200"
+                                        : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                                }`}
                             >
-                                <ThumbsUp className={`w-4 h-4 ${isLiked ? "fill-red-600" : ""}`} />
-                                {isLiked ? "Liked" : "Like"}
-                                <span className="ml-1 text-xs">({likes})</span>
+                                <ThumbsUp className={`w-4 h-4 ${isActiveLiked ? "fill-red-600" : ""}`} />
+                                {isActiveLiked ? "Liked" : "Like"}
+                                <span className="ml-1 text-xs"> {likes} </span>
                             </Button>
                         </div>
 
-                        {/* Description — left-aligned, below owner/subscribe */}
+                        {/* Description */}
                         <div className="mt-3 bg-gray-50 rounded-xl p-4 self-start">
                             <p className="text-sm text-gray-700 whitespace-pre-wrap">
                                 {currentVideo?.description}
@@ -192,8 +203,6 @@ function VideoFile() {
                         </div>
 
                     </div>
-
-
 
                     {/* Comments Section */}
                     <div className="mt-6">

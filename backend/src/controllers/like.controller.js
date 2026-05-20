@@ -23,6 +23,9 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         if (!removeLike)
             throw new ApiError(500, "Error in removing like")
         await Videos.findByIdAndUpdate(videoId, { $inc: { totalLikes: -1 } })  //decrementing the like count in video document
+        const cleanVideoId = videoId.toString().trim();
+        await client.del(`video:${cleanVideoId}`);
+
         return res.status(200)
             .json(
                 new ApiResponse(200, { isLiked: false }, "Video unliked successfully")
@@ -36,6 +39,9 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         if (!addLike)
             throw new ApiError(500, "Error in liking the video")
         await Videos.findByIdAndUpdate(videoId, { $inc: { totalLikes: 1 } })  //incrementing the like count in video document
+        const cleanVideoId = videoId.toString().trim();
+        await client.del(`video:${cleanVideoId}`);
+
         //including web sockets to notify the video owner about the new like
 
         const videoOwner = await Videos.findById(videoId).select("owner")
@@ -65,7 +71,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
                 })
             }
         }
-        
+
         return res.status(200)
             .json(
                 new ApiResponse(200, { ...addLike._doc, isLiked: true }, "Video liked successfully")

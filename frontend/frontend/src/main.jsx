@@ -51,11 +51,11 @@ const router = createBrowserRouter([
 ])
 
 createRoot(document.getElementById('root')).render(
-    <StrictMode>
+   
         <Provider store={store}>
             <AuthCheck>
                 <RouterProvider router={router} />
             </AuthCheck>
         </Provider>
-    </StrictMode>
+   
 )

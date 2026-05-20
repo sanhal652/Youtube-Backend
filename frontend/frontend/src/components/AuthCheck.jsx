@@ -31,8 +31,10 @@ const AuthCheck = ({ children }) => {
 
                     //fetch liked videos and store in redux
                     const likedVideos= await getLikedVideosApi()
+                   
                     if(likedVideos?.success)
                     {
+                        
                         dispatch(getLikedVideosStore(likedVideos.data))
                     }
                 }

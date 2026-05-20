@@ -17,8 +17,9 @@ const videoSlice=createSlice({
             state.loading=false;
         },
         fetchCurrentVideo:(state,action)=>{
-            state.currentVideo=action.payload;
+            state.currentVideo={...action.payload};
             state.loading=false;
+            state.error=null;
         },
         addVideo:(state,action)=>{
             state.userVideos.unshift(action.payload);

@@ -192,16 +192,25 @@ const getVideoById = asyncHandler(async (req, res) => {
     if (!videoId?.trim())
         throw new ApiError(400, "Video not found")
 
-    const videoCacheKey = `video:${videoId}`
-    const videoCacheValue = await client.get(videoCacheKey)
-    if (videoCacheValue)
-        return res.status(200)
-            .json(new ApiResponse(200, JSON.parse(videoCacheValue), "Video fetched successfully from redis cache"))
+    const videoCacheKey = `video:${videoId.toString().trim()}`
 
-    //to increment the view count
-    await Videos.findByIdAndUpdate(videoId, {
+    const updatedVideo=await Videos.findByIdAndUpdate(videoId, {
         $inc: { views: 1 }
-    });
+    }, { returnDocument: "after", new :true });
+
+    if(!updatedVideo)
+        throw new ApiError(404, "Video not found")
+
+    const videoCacheValue = await client.get(videoCacheKey)
+    if (videoCacheValue){
+
+        const cachedData= JSON.parse(videoCacheValue)
+
+        cachedData.views= updatedVideo.views
+        return res.status(200)
+            .json(new ApiResponse(200, cachedData, "Video fetched successfully from redis cache"))
+    }
+    
 
     const video = await Videos.aggregate([
         {
@@ -210,16 +219,7 @@ const getVideoById = asyncHandler(async (req, res) => {
             }
         },
         {
-            //getting like count
-            $lookup: {
-                from: "likes",
-                localField: "_id",
-                foreignField: "video",
-                as: "likesCount",
-            }
-        },
-        {
-            //getting comments count
+            // Getting comments count
             $lookup: {
                 from: "comments",
                 localField: "_id",
@@ -227,8 +227,21 @@ const getVideoById = asyncHandler(async (req, res) => {
                 as: "commentsCount",
             }
         },
-        //getting category
+        //getting likes count
         {
+            // 
+            
+            // 🟢 FIXED: Standard lookup that handles ObjectId casting perfectly automatically
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "video",
+                as: "likesCount"
+            }
+        },
+        
+        {
+            // Getting category
             $lookup: {
                 from: "categories",
                 localField: "category",
@@ -237,71 +250,49 @@ const getVideoById = asyncHandler(async (req, res) => {
             }
         },
         {
-            //getting recent comments
+            // Getting recent comments
             $lookup: {
                 from: "comments",
                 localField: "_id",
                 foreignField: "video",
                 as: "recentComments",
-                pipeline: [{
-                    $sort: { createdAt: -1 }
-                },
-                {
-                    $limit: 10
-                },
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "owner",
-                        foreignField: "_id",
-                        as: "commentedBy",
-                        pipeline: [{
-                            $project: {
-                                username: 1,
-                                avatar: 1
-                            }
-                        }]
-                    }
-                },
-                {
-                    $addFields: {
-                        commentedBy: {
-                            $first: "$commentedBy"
+                pipeline: [
+                    { $sort: { createdAt: -1 } },
+                    { $limit: 10 },
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "commentedBy",
+                            pipeline: [{ $project: { username: 1, avatar: 1 } }]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            commentedBy: { $first: "$commentedBy" }
                         }
                     }
-                }
                 ]
             }
         },
         {
-            //getting owner
+            // Getting owner
             $lookup: {
                 from: "users",
                 localField: "owner",
                 foreignField: "_id",
                 as: "owner",
-                pipeline: [{
-                    $project: {
-                        username: 1,
-                        avatar: 1
-                    }
-                }]
+                pipeline: [{ $project: { username: 1, avatar: 1 } }]
             }
         },
         {
             $addFields: {
-                totalLikes: {
-                    $size: "$likesCount"
-                },
-                totalComments: {
-                    $size: "$commentsCount"
-                },
-                owner: {
-                    $first: "$owner"
-                },
-                category: {
-                    $first: "$category"
-                }
+                totalComments: { $size: "$commentsCount" },
+                owner: { $first: "$owner" },
+                category: { $first: "$category" },
+                totalLikes: "$totalLikes"
+                
             }
         },
         {
@@ -319,20 +310,24 @@ const getVideoById = asyncHandler(async (req, res) => {
             }
         }
     ])
+
     if (!video?.length)
         throw new ApiError(500, "Unable to fetch video")
 
+    // 🚨 DEBUG LOG: Put this exactly here
+    console.log("📊 DB Aggregation Snapshot:", {
+        db_totalLikes: video[0].totalLikes,
+        lookup_array_size: video[0].likesCount ? video[0].likesCount.length : "No array found"
+    });
 
-    //setEx= set with expiry, 
-    // instead of using client.set and then lient.expiry 
-    // we use this for a single command to set the value with expiry time in seconds
+    // Cache the completely updated data
     await client.setEx(videoCacheKey, 1000, JSON.stringify(video[0]))
+
 
     return res.status(200)
         .json(
             new ApiResponse(200, video[0], "Video fetched successfully")
         )
-
 })
 
 
