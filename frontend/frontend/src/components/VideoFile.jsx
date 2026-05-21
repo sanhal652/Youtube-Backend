@@ -23,7 +23,9 @@ function VideoFile() {
 
     // 1. Unified Local States for Instant UI Interactions
     const [likes, setLikes] = useState(0)
-    const [isActiveLiked, setIsActiveLiked] = useState(false) // 🟢 Tracks instant UI color/text updates
+    const [isActiveLiked, setIsActiveLiked] = useState(false) 
+   
+    const [isActiveSubscribed,setIsActiveSubscribed]= useState(false) 
 
     const isSubscribed = userSubscribedChannels.some(
         channel => channel._id === currentVideo?.owner?._id
@@ -49,26 +51,31 @@ function VideoFile() {
         if (videoId) getVideo()
     }, [videoId, dispatch])
 
-    // 3. 🟢 THE REFRESH SYNC: Handles populating state when network requests complete
+    // 3.  Handles populating state when network requests complete
     useEffect(() => {
         if (currentVideo) {
             setLikes(currentVideo.totalLikes);
             // Derive the initial button visual status from Redux list records safely
             setIsActiveLiked(likedVideos.some(v => v._id === videoId));
+             
+            const isCurrentlySubbed= userSubscribedChannels.some(
+                item=>item.channel===currentVideo?.owner?._id)
+           
+            setIsActiveSubscribed(isCurrentlySubbed)
         }
-    }, [currentVideo?.totalLikes, currentVideo?._id, likedVideos, videoId]);
+    }, [currentVideo?.totalLikes, currentVideo?._id, likedVideos, videoId,currentVideo?.owner?._id, userSubscribedChannels]);
 
-    // 4. Optimized Instant Layout Toggling Function
+    // 4.  Toggling Function
     const handleLike = async () => {
-        const wasLiked = isActiveLiked // 🟢 Base decisions off the immediate active state tracker
+        const wasLiked = isActiveLiked 
         try {
             const response = await toggleLikeStatusApi(videoId)
             if (response.success) {
-                // 🟢 Update counter and button style together instantly
+              
                 setLikes(prev => wasLiked ? prev - 1 : prev + 1)
                 setIsActiveLiked(!wasLiked)
                 
-                // Keep background Redux models populated cleanly
+               
                 dispatch(toggleLikeStatusStore({ videoId, video: currentVideo }))
             }
         } catch (error) {
@@ -77,12 +84,15 @@ function VideoFile() {
     }
 
     const handleSubscribe = async () => {
+        const wasSubscribed= isActiveSubscribed
         try {
             const response = await toggleSubscriptionStatus(currentVideo?.owner?._id)
             if (response.success) {
+                setIsActiveSubscribed(!wasSubscribed),
                 dispatch(toggleSubscriptionStatusStore({
                     channelId: currentVideo?.owner?._id
                 }))
+               
             }
         } catch (error) {
             console.log("Subscription failed", error)
@@ -101,7 +111,7 @@ function VideoFile() {
         </div>
     )
 
-    // Layout Guard: Wait for Redux payload hydration before trying to read fields
+    
     if (!currentVideo) return null
 
     return (
@@ -156,19 +166,16 @@ function VideoFile() {
                                     <p className="font-semibold text-gray-900 text-sm">
                                         {currentVideo?.owner?.username}
                                     </p>
-                                    <p className="text-xs text-gray-500">
-                                        {likes} likes
-                                    </p>
                                 </div>
 
                                 <Button
                                     onClick={handleSubscribe}
-                                    className={`ml-4 rounded-full px-5 py-2 text-sm font-semibold transition-all ${isSubscribed
+                                    className={`ml-4 rounded-full px-5 py-2 text-sm font-semibold transition-all ${isActiveSubscribed
                                         ? "bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300"
                                         : "bg-red-600 hover:bg-red-700 text-white"
                                         }`}
                                 >
-                                    {isSubscribed ? (
+                                    {isActiveSubscribed ? (
                                         <span className="flex items-center gap-1">
                                             <BellOff className="w-4 h-4" /> Subscribed
                                         </span>
@@ -184,7 +191,7 @@ function VideoFile() {
                             <Button
                                 onClick={handleLike}
                                 className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-all ${
-                                    isActiveLiked // 🟢 Tracks instant responsive design class shifts
+                                    isActiveLiked 
                                         ? "bg-red-100 text-red-600 border border-red-300 hover:bg-red-200"
                                         : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
                                 }`}

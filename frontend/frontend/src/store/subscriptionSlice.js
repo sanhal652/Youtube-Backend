@@ -19,11 +19,11 @@ const subscriptionSlice= createSlice({
         },
         toggleSubscriptionStatusStore:(state,action)=>{
             const {channelId}= action.payload;
-            const isSubscribed=state.userSubscribedChannels.find(channel=>channel._id===channelId)
+            const isSubscribed=state.userSubscribedChannels.find(item=>item.channel===channelId)
             if(isSubscribed){
-                state.userSubscribedChannels=state.userSubscribedChannels.filter(channel=>channel._id!==channelId)
+                state.userSubscribedChannels=state.userSubscribedChannels.filter(item=>item.channel!==channelId)
             } else {
-                state.userSubscribedChannels.push({_id: channelId})
+                state.userSubscribedChannels.push({channel: channelId})
             }
         }
     }
