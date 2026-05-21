@@ -11,7 +11,12 @@ export const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200 shadow-sm">
 
-      {/* 1. Logo */}
+      {/* Menu */}
+      <Button size="icon" variant="ghost" className="hover:bg-gray-100 rounded-full">
+        <Menu className="w-5 h-5 text-gray-700" />
+      </Button>
+
+      {/* 2. Logo */}
       <Link to="/" className="flex items-center gap-1 shrink-0">
         <div className="bg-red-600 text-white font-bold text-sm px-2 py-1 rounded">
           VT
