@@ -11,19 +11,19 @@ const playlistSlice = createSlice({
     name: "playlist",
     initialState,
     reducers: {
-        fetchUserPlaylists: (state, action) => {
+        fetchUserPlaylistsStore: (state, action) => {
             state.userPlaylists = action.payload;
         
         },
 
 
-        fetchCurrentPlaylist: (state, action) => {
+        fetchCurrentPlaylistStore: (state, action) => {
             state.currentPlaylist = action.payload;
             
         },
 
 
-        addVideoToPlaylist: (state, action) => {
+        addVideoToPlaylistStore: (state, action) => {
             const { playlistId, videoId } = action.payload;
             const playlist = state.userPlaylists.find(pl => pl._id === playlistId);
             if (playlist) {
@@ -31,26 +31,41 @@ const playlistSlice = createSlice({
                     playlist.videos.push(videoId); 
                 }
             }
+            if(state.currentPlaylist && state.currentPlaylist._id===playlistId){
+                if(!state.currentPlaylist.videosInPlaylist){
+                    state.currentPlaylist.videosInPlaylist=[]
+                }
+                if(!state.currentPlaylist.videosInPlaylist.some(video=>video._id===videoId)){
+                    state.currentPlaylist.videosInPlaylist.push({_id:videoId})
+                }
+            }
             
         },
 
 
-        deleteVideoFromPlaylist: (state, action) => {
+        deleteVideoFromPlaylistStore: (state, action) => {
             const { playlistId, videoId } = action.payload;
+
+            //for sidebar
             const playlist = state.userPlaylists.find(pl => pl._id === playlistId);
             if (playlist) {
                 playlist.videos = playlist.videos.filter(id => id !== videoId)
+            }
+
+            //for current playlist
+            if(state.currentPlaylist && state.currentPlaylist._id===playlistId){
+                state.currentPlaylist.videosInPlaylist = state.currentPlaylist.videosInPlaylist.filter(video => video._id !== videoId)
             }
            
         },
 
 
-        addPlaylist: (state, action) => {
+        addPlaylistStore: (state, action) => {
             state.userPlaylists.unshift(action.payload)
             
         },
 
-        deletePlaylist: (state, action) => {
+        deletePlaylistStore: (state, action) => {
             state.userPlaylists = state.userPlaylists.filter(pl => pl._id !== action.payload)
             
         },
@@ -63,4 +78,4 @@ const playlistSlice = createSlice({
 
 
 export default playlistSlice.reducer;
-export const { fetchUserPlaylists, fetchCurrentPlaylist, addVideoToPlaylist, deleteVideoFromPlaylist, addPlaylist, deletePlaylist, setLoading } = playlistSlice.actions;
+export const { fetchUserPlaylistsStore, fetchCurrentPlaylistStore, addVideoToPlaylistStore, deleteVideoFromPlaylistStore, addPlaylistStore, deletePlaylistStore, setLoading } = playlistSlice.actions;

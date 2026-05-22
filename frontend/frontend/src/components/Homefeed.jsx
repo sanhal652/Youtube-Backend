@@ -1,12 +1,14 @@
 import { getAllVideos } from '@/axiosFiles/videoApi'
-import React from 'react'
+import React,{useState} from 'react'
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchAllVideos, setLoading } from '../store/videoSlice'
 import VideoCard from './VideoCard'
+import PlaylistModal from './PlaylistModal'
 
 function Homefeed() {
     const dispatch = useDispatch()
+    const[selectedVideoId, setSelectedVideoId] = useState(null)
     const { allVideos, loading } = useSelector(state => state.video)
     useEffect(() => {
         const fetchVideos = async () => {
@@ -62,7 +64,13 @@ function Homefeed() {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
             {allVideos.map(video =>
-               video && <VideoCard key={video._id} video={video} />
+               video && <VideoCard key={video._id} video={video}  onAddToPlaylist={(id) => setSelectedVideoId(id)}/>
+            )}
+            {selectedVideoId && (
+                <PlaylistModal 
+                    videoId={selectedVideoId} 
+                    onClose={() => setSelectedVideoId(null)} 
+                />
             )}
         </div>
     )
