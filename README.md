@@ -1,4 +1,4 @@
-# 📺 VideoTube Backend
+# 📺 Viewsonic
 
 A production-ready, feature-rich backend for a YouTube-like video sharing platform built with Node.js, Express, MongoDB, Redis, and Socket.IO.
 
