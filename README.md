@@ -50,7 +50,7 @@ When a video is uploaded, Gemini AI automatically analyzes the title and descrip
 
 > `Education` • `Entertainment` • `Technology` • `Lifestyle` • `Sports` • `Music` • `Travel` • `Food` • `Fashion` • `Gaming` • `Health and Fitness` • `Comedy` • `Science` • `Art and Culture` • `Business and Finance`
 
-### 📝 Video Summarization *(On Demand)*
+### 📝 Video Summarization 
 Generates a concise 2-3 sentence summary using a **3-layer fetching strategy** to minimize API costs:
 
 ```
